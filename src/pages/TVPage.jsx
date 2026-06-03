@@ -616,12 +616,14 @@ export default function TVPage({
         .catch(() => {
           if (mounted) setAnilistLoading(false);
         });
-      // Switch to anime source if current source is not an anime source
+      // Switch to anime source if current source is not an anime source.
+      // In browser (no Electron), AllManga is unavailable — use Videasy instead.
       const currentSrc = PLAYER_SOURCES.find((s) => s.id === playerSource);
       if (!currentSrc?.tag) {
         const saved = storage.get("playerSource");
         const savedSrc = PLAYER_SOURCES.find((s) => s.id === saved);
-        setPlayerSource(savedSrc?.tag ? saved : ANIME_DEFAULT_SOURCE);
+        const animeSource = window.electron ? ANIME_DEFAULT_SOURCE : NON_ANIME_DEFAULT_SOURCE;
+        setPlayerSource(savedSrc?.tag ? saved : animeSource);
       }
     } else {
       setAnilistLoading(false);
