@@ -740,11 +740,22 @@ git push origin main
 - [x] Added `.github/CODEOWNERS`
 - [ ] Tested upstream sync workflow manually (trigger via GitHub → Actions tab)
 
+### Performance
+- [x] Default source changed from Vidking → **Videasy** (smoother, fewer ads)
+- [x] Preconnect + dns-prefetch hints added in `index.html` for Videasy, Vidking, VidSrc, TMDB (faster load)
+
+### How Content Works (Reference)
+- TMDB controls what **appears** in the app (movie list, posters, descriptions)
+- Videasy / VidSrc / Vidking control whether the video **actually plays**
+- New movies appear automatically — no repo changes needed
+- If a movie shows but won't play → try switching sources (Videasy → VidSrc → Vidking)
+- If a source has a video but TMDB doesn't list it → it will never appear in the app
+
 ### Still To Do / Known Limitations
 - [ ] `public/logo.svg` — replace with a custom NETFLES logo if desired
 - [ ] Test upstream sync workflow manually via GitHub → Actions tab → Run workflow
 - [ ] Ads on streaming sources — cannot block in browser (Electron-only). Workarounds: AdGuard DNS (`94.140.14.14`) on phone, or Firefox + uBlock Origin
-- [ ] AllManga source — desktop app only. Browser shows friendly error message. Use Videasy or Vidking instead
+- [ ] AllManga source — desktop app only. Browser shows friendly error. Use Videasy or Vidking instead
 
 ---
 
