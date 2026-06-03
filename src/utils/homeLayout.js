@@ -8,7 +8,9 @@ export const HOME_ROWS = [
   { id: "recommended", label: "Recommended for You" },
   { id: "trendingMovies", label: "Trending Movies" },
   { id: "trendingTV", label: "Trending Series" },
+  { id: "trendingAnime", label: "Trending Anime" },
   { id: "topRated", label: "Top Rated" },
+  { id: "popularMovies", label: "Popular Movies" },
 ];
 
 const DEFAULT_ROW_ORDER = HOME_ROWS.map((r) => r.id);

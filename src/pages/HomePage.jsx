@@ -51,6 +51,8 @@ export default function HomePage({
 
   const [recommendedItems, setRecommendedItems] = useState([]);
   const [topRatedItems, setTopRatedItems] = useState([]);
+  const [animeItems, setAnimeItems] = useState([]);
+  const [popularMovieItems, setPopularMovieItems] = useState([]);
 
   // Load layout config (order + visibility) once on mount
   const [layout] = useState(() => loadHomeLayout());
@@ -66,6 +68,8 @@ export default function HomePage({
       ...trendingTV.map((i) => ({ ...i, media_type: "tv" })),
       ...recommendedItems,
       ...topRatedItems,
+      ...animeItems,
+      ...popularMovieItems,
     ],
     [inProgress, trending, trendingTV, recommendedItems, topRatedItems],
   );
@@ -195,6 +199,46 @@ export default function HomePage({
       })
       .catch((e) => {
         if (e.name !== "AbortError") console.warn("Top rated fetch failed", e);
+      });
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiKey, offline]);
+
+  // Fetch trending anime (Animation genre + JP origin)
+  useEffect(() => {
+    if (!apiKey || offline) return;
+    const controller = new AbortController();
+    tmdbFetch(
+      "/discover/tv?with_genres=16&with_origin_country=JP&sort_by=popularity.desc&page=1",
+      apiKey,
+      { signal: controller.signal },
+    )
+      .then((data) => {
+        const items = (data.results || [])
+          .slice(0, 20)
+          .map((i) => ({ ...i, media_type: "tv" }));
+        setAnimeItems(items);
+      })
+      .catch((e) => {
+        if (e.name !== "AbortError") console.warn("Anime fetch failed", e);
+      });
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiKey, offline]);
+
+  // Fetch popular movies
+  useEffect(() => {
+    if (!apiKey || offline) return;
+    const controller = new AbortController();
+    tmdbFetch("/movie/popular?page=1", apiKey, { signal: controller.signal })
+      .then((data) => {
+        const items = (data.results || [])
+          .slice(0, 20)
+          .map((i) => ({ ...i, media_type: "movie" }));
+        setPopularMovieItems(items);
+      })
+      .catch((e) => {
+        if (e.name !== "AbortError") console.warn("Popular movies fetch failed", e);
       });
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -433,6 +477,36 @@ export default function HomePage({
               key="topRated"
               items={topRatedItems}
               title="Top Rated"
+              onSelect={onSelect}
+              ratingsMap={enrichedRatingsMap}
+            />
+          );
+        }
+
+        if (id === "trendingAnime") {
+          if (animeItems.length === 0) return null;
+          if (viewMode === "list")
+            return renderList("trendingAnime", "Trending Anime", null, animeItems);
+          return (
+            <TrendingCarousel
+              key="trendingAnime"
+              items={animeItems}
+              title="Trending Anime"
+              onSelect={onSelect}
+              ratingsMap={enrichedRatingsMap}
+            />
+          );
+        }
+
+        if (id === "popularMovies") {
+          if (popularMovieItems.length === 0) return null;
+          if (viewMode === "list")
+            return renderList("popularMovies", "Popular Movies", null, popularMovieItems);
+          return (
+            <TrendingCarousel
+              key="popularMovies"
+              items={popularMovieItems}
+              title="Popular Movies"
               onSelect={onSelect}
               ratingsMap={enrichedRatingsMap}
             />
