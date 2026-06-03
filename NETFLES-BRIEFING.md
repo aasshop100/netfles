@@ -751,15 +751,29 @@ git push origin main
 - If a movie shows but won't play → try switching sources (Videasy → VidSrc → Vidking)
 - If a source has a video but TMDB doesn't list it → it will never appear in the app
 
-### Anime Support
+### Anime & Sources
 - [x] Anime series and movies now play in browser via Videasy (no longer crashes)
 - [x] Browser auto-detects anime content → uses Videasy instead of AllManga
 - [x] AllManga still used on Electron desktop app (unchanged)
-- [x] Added **VidSrc 2** (vidsrc.xyz) — large anime library, widely used
-- [x] Added **EmbedSU** (embed.su) — additional anime fallback source
-- ℹ️ AllManga source button will still show an error if manually selected in browser — expected
-- ℹ️ No single source has every anime. If one fails → switch sources in the player
-- ℹ️ Recommended order for anime: Videasy → VidSrc 2 → EmbedSU → VidSrc → Vidking
+- [x] Sources researched from GitHub open-source streaming projects
+
+#### Full Source List (9 sources)
+| Source | ID | Anime | Notes |
+|--------|----|-------|-------|
+| Videasy | `videasy` | ✅ | Default — smoothest, fewest ads |
+| VidSrc | `vidsrc` | ✅ | Reliable fallback |
+| Vidking | `vidking` | ✅ | General purpose |
+| VidSrc 2 | `vidsrc2` | ✅ | vidsrc.xyz — large library |
+| EmbedSU | `embedsu` | ✅ | embed.su |
+| Vidlink Pro | `vidlink` | ✅ | vidlink.pro — widely used |
+| AutoEmbed | `autoembed` | ✅ | autoembed.co — great for anime |
+| 2Embed | `2embed` | ✅ | 2embed.stream — very reliable |
+| MultiEmbed | `multiembed` | ✅ | multiembed.mov — aggregates streams |
+| AllManga | `allmanga` | ✅ | Desktop Electron app only |
+
+- ℹ️ AllManga shows a friendly error if selected in browser — expected behavior
+- ℹ️ No single source has every title. If one fails → tap source button and try the next
+- ℹ️ Recommended order for anime: Videasy → AutoEmbed → Vidlink Pro → VidSrc 2 → 2Embed
 
 ### Still To Do / Known Limitations
 - [ ] `public/logo.svg` — replace with a custom NETFLES logo if desired
