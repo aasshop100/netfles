@@ -29,6 +29,15 @@ export default function Sidebar({
 
   const [tooltip, setTooltip] = useState(null); // { title, y }
   const [contextMenu, setContextMenu] = useState(null); // { item, x, y }
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const mainEl = document.querySelector(".main");
+    if (!mainEl) return;
+    const onScroll = () => setScrolled(mainEl.scrollTop > 10);
+    mainEl.addEventListener("scroll", onScroll, { passive: true });
+    return () => mainEl.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     const close = () => setContextMenu(null);
@@ -97,7 +106,7 @@ export default function Sidebar({
   };
 
   return (
-    <div className="sidebar">
+    <div className={`sidebar${scrolled ? " scrolled" : ""}`}>
       <div
         className="sidebar-logo"
         onClick={() => onNavigate("home")}
