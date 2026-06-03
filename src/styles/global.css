@@ -311,6 +311,19 @@ body,
         linear-gradient(to top, var(--bg) 0%, transparent 45%);
 }
 
+.hero-brand {
+    position: absolute;
+    top: 18px;
+    left: 20px;
+    z-index: 10;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: var(--red);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    pointer-events: none;
+}
+
 .hero-content {
     position: absolute;
     bottom: 0;

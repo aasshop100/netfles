@@ -303,6 +303,7 @@ export default function HomePage({
             }}
           />
           <div className="hero-gradient" />
+          <div className="hero-brand">NETFLES</div>
           <div className="hero-content">
             <div className="hero-type">Trending · Movie</div>
             <div className="hero-title">{hero.title || hero.name}</div>
