@@ -3896,12 +3896,27 @@ html[data-win-titlebar][data-maximized] .main {
         box-shadow: 0 -1px 0 rgba(255,255,255,0.04);
     }
 
-    /* Hide logo, separator, saved list, and bottom group in bottom nav */
+    /* Hide logo, separator, saved list in bottom nav */
     .sidebar-logo,
     .sidebar-sep,
     .sidebar-saved,
     .sidebar-saved-thumb-tooltip {
         display: none;
+    }
+
+    /* Show NETFLES brand on hero on mobile */
+    .hero-brand {
+        display: block;
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        z-index: 10;
+        font-family: var(--font-display);
+        font-size: 36px;
+        letter-spacing: 3px;
+        color: var(--red);
+        text-shadow: 0 0 20px rgba(229,9,20,0.5), 0 2px 8px rgba(0,0,0,0.8);
+        pointer-events: none;
     }
 
     /* Show bottom buttons inline in the bottom nav row */
