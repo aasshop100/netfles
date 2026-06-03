@@ -791,4 +791,33 @@ git push origin main
 
 ---
 
-*Briefing prepared with Claude (claude.ai) — ready for VS Code. Good luck Lester! 🚀*
+## 📱 Phone Test Checklist (test on `https://aasshop100.github.io/netfles`)
+
+> Run through these every time a new session of changes is made.
+
+- [ ] Home page loads — hero shows, trending rows visible
+- [ ] NETFLES branding visible top-left on hero
+- [ ] Bottom nav works — Home, Search, History, Settings all navigate
+- [ ] Search works — type a movie/anime name, results appear
+- [ ] Movie plays — tap a movie → Play → video loads (try Videasy first)
+- [ ] TV series plays — tap a series → pick episode → video loads ✅ *fixed this session*
+- [ ] Anime plays — tap an anime series → video loads via Videasy ✅ *fixed this session*
+- [ ] Source switching works — tap source button in player, switch to VidSrc 2 or AutoEmbed
+- [ ] English subtitles — on VidSrc / VidSrc 2, CC should default to English
+- [ ] Save/bookmark — tap Save on a movie, check Library tab
+- [ ] History — after watching, check History tab
+
+---
+
+## 🗒️ Session Log
+
+| Date | Changes |
+|------|---------|
+| 2026-06-03 | Full setup: clone, rebrand, Electron removal, GitHub Pages, upstream sync |
+| 2026-06-03 | UI redesign (Netflix-modern), download feature removed |
+| 2026-06-03 | 9 streaming sources added, anime browser fix, English subtitle default |
+| 2026-06-03 | **Critical bug fix** — TV series black player (webview→iframe), all Electron guards |
+
+---
+
+*Last updated: 2026-06-03 — Briefing maintained with Claude Code (claude.ai). Good luck Lester! 🚀*
