@@ -692,17 +692,20 @@ git push origin main
 - [x] `index.html` → `<title>NETFLES</title>`
 - [x] `src/components/Sidebar.jsx` → "NETFLES"
 - [x] `src/components/WindowTitlebar.jsx` → "NETFLES"
-- [ ] `public/logo.svg` → replaced with NETFLES logo
+- [x] NETFLES brand label added top-left of home hero (red, bold)
+- [ ] `public/logo.svg` → replaced with custom NETFLES logo
 
 ### Electron → Web App
 - [x] Removed Electron (`npm uninstall electron electron-builder`)
 - [x] Updated `package.json` scripts for Vite web build
 - [x] Updated `vite.config.js` with `base: '/netfles/'`
+- [x] Converted `<webview>` to `<iframe>` in MoviePage + TVPage (browser compatible)
+- [x] Guarded `window.electron.resolveAllManga` — shows friendly error in browser instead of crashing
+- [x] `.env.local` created for local dev (gitignored — never pushed)
 - [ ] Deleted `src/ipc/downloads.js` — download feature removed ❌
 - [ ] Deleted/hidden `src/components/DownloadModal.jsx`
 - [ ] Deleted/hidden `src/pages/DownloadsPage.jsx`
 - [ ] Removed Downloads link from Sidebar
-- [ ] Rewrote remaining `src/ipc/` files to browser-compatible fetch/localStorage
 - [x] Made app fully responsive (mobile-friendly)
 - [x] Tested locally with `npm run dev` — app loads in browser
 - [x] Tested responsiveness in Chrome DevTools at 375px, 768px, 1280px
@@ -715,16 +718,23 @@ git push origin main
 
 ### GitHub Pages
 - [x] Added `.github/workflows/deploy.yml`
-- [ ] Added `VITE_TMDB_API_KEY` as GitHub Secret
-- [ ] Enabled GitHub Pages → Source: GitHub Actions
+- [x] Added `VITE_TMDB_API_KEY` as GitHub Secret
+- [x] Enabled GitHub Pages → Source: GitHub Actions
 - [x] Pushed to trigger first deploy
-- [ ] Live link working: `https://aasshop100.github.io/netfles`
-- [ ] Tested on phone 📱
+- [x] Live link working: `https://aasshop100.github.io/netfles`
+- [x] Tested on phone 📱
 
 ### Automation
 - [x] Added `.github/workflows/sync-upstream.yml`
 - [x] Added `.github/CODEOWNERS`
-- [ ] Tested upstream sync workflow manually
+- [ ] Tested upstream sync workflow manually (trigger via GitHub → Actions tab)
+
+### Still To Do / Known Limitations
+- [ ] `public/logo.svg` — replace with a custom NETFLES logo if desired
+- [ ] Clean up leftover download files (`src/ipc/downloads.js`, `DownloadModal.jsx`, `DownloadsPage.jsx`)
+- [ ] Ads on streaming sources — cannot block in browser (Electron-only feature). Workarounds: AdGuard DNS on phone, Firefox + uBlock Origin, or switch default source to Videasy
+- [ ] AllManga source only works in Electron desktop app — browser shows friendly error. Other sources (Videasy, Vidking, VidSrc) work fine in browser
+- [ ] Test upstream sync workflow manually via GitHub → Actions tab → Run workflow
 
 ---
 
