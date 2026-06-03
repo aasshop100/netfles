@@ -775,6 +775,15 @@ git push origin main
 - ℹ️ No single source has every title. If one fails → tap source button and try the next
 - ℹ️ Recommended order for anime: Videasy → AutoEmbed → Vidlink Pro → VidSrc 2 → 2Embed
 
+### Bug Fixes (from full codebase audit)
+- [x] **Critical** — TVPage `<webview>` replaced with `<iframe>` — TV series were completely broken in browser (black player)
+- [x] **Critical** — TVPage `did-finish-load`/`did-fail-load` events replaced with `onLoad`/`onError` on iframe
+- [x] **Critical** — All `executeJavaScript` calls in TVPage guarded with `if (wv.executeJavaScript)` — were crashing silently on every progress tick
+- [x] **Medium** — AniSkip injection guarded — only runs in Electron desktop app
+- [x] **Low** — Toast/episode-check pill position fixed (`var(--sidebar)` → `24px`)
+- [x] **Low** — Stale DownloadsPage comments cleaned up
+- [x] English subtitles set as default — VidSrc and VidSrc 2 auto-select English via `ds_lang=en`
+
 ### Still To Do / Known Limitations
 - [ ] `public/logo.svg` — replace with a custom NETFLES logo if desired
 - [ ] Test upstream sync workflow manually via GitHub → Actions tab → Run workflow
