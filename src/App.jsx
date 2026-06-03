@@ -318,7 +318,9 @@ export default function App() {
     let mounted = true;
     secureStorage.get("apikey").then((val) => {
       if (!mounted) return;
-      setApiKey(val || null);
+      const key = val || import.meta.env.VITE_TMDB_API_KEY || null;
+      if (!val && key) secureStorage.set("apikey", key);
+      setApiKey(key);
       setApiKeyLoaded(true);
     });
     return () => {
