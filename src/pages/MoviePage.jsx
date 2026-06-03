@@ -29,7 +29,6 @@ import {
   BackIcon,
   StarIcon,
   FilmIcon,
-  DownloadIcon,
   WatchedIcon,
   TrailerIcon,
   RatingShieldIcon,
@@ -38,7 +37,6 @@ import {
   ShieldBlockIcon,
   PopOutIcon,
 } from "../components/Icons";
-import DownloadModal from "../components/DownloadModal";
 import TrailerModal from "../components/TrailerModal";
 import BlockedStatsModal from "../components/BlockedStatsModal";
 import { useBlockedStats } from "../utils/useBlockedStats";
@@ -62,17 +60,13 @@ export default function MoviePage({
   saveProgress,
   onBack,
   onSettings,
-  onDownloadStarted,
   watched,
   onMarkWatched,
   onMarkUnwatched,
-  downloads,
-  onGoToDownloads,
   onSelect,
 }) {
   const [details, setDetails] = useState(null);
   const [playing, setPlaying] = useState(false);
-  const [showDownload, setShowDownload] = useState(false);
   const [trailerKey, setTrailerKey] = useState(null);
   const [showTrailer, setShowTrailer] = useState(false);
   const [m3u8Url, setM3u8Url] = useState(null);
@@ -120,9 +114,6 @@ export default function MoviePage({
   const isAnime = useMemo(
     () => isAnimeContent(item, details),
     [item.id, details],
-  );
-  const [downloaderFolder, setDownloaderFolder] = useState(
-    () => storage.get("downloaderFolder") || "",
   );
 
   // Blocked request stats
@@ -583,10 +574,6 @@ export default function MoviePage({
     };
   }, [playing]);
 
-  const handleSetDownloaderFolder = useCallback((folder) => {
-    setDownloaderFolder(folder);
-    storage.set("downloaderFolder", folder);
-  }, []);
 
   // Prefer AniList metadata for anime when available
   const displayOverview =
@@ -612,15 +599,6 @@ export default function MoviePage({
     return new Date(d.release_date) > today;
   }, [d.release_date]);
 
-  // Check if this movie is already downloaded or currently downloading
-  const movieDownload = (downloads || []).find(
-    (dl) =>
-      dl.mediaType === "movie" &&
-      (dl.tmdbId === item.id || dl.mediaId === item.id) &&
-      (dl.status === "completed" ||
-        dl.status === "local" ||
-        dl.status === "downloading"),
-  );
 
   return (
     <div className="fade-in">
@@ -1051,48 +1029,6 @@ export default function MoviePage({
                 ))}
               </div>
             )}
-            <button
-              className="player-overlay-btn"
-              onClick={() =>
-                movieDownload
-                  ? onGoToDownloads?.(movieDownload.id)
-                  : (setShowSourceMenu(false), setShowDownload(true))
-              }
-              title={
-                movieDownload
-                  ? movieDownload.status === "downloading"
-                    ? "Downloading… - view in Downloads"
-                    : "Already downloaded - view in Downloads"
-                  : "Download"
-              }
-            >
-              {movieDownload ? (
-                <span
-                  className="player-downloaded-icon"
-                  style={{
-                    color:
-                      movieDownload.status === "downloading"
-                        ? "var(--red)"
-                        : "#4caf50",
-                  }}
-                >
-                  {movieDownload.status === "downloading" ? "↓" : "✓"}
-                </span>
-              ) : (
-                <DownloadIcon />
-              )}
-              {!movieDownload && m3u8Url && (
-                <span className="player-overlay-dot" />
-              )}
-              {!sourceSupportsProgress(playerSource) && (
-                <span
-                  className="player-no-progress-hint"
-                  title="No automatic progress tracking for this source"
-                >
-                  ⚠ no tracking
-                </span>
-              )}
-            </button>
           </div>
 
           {displayPct > 0 && (
@@ -1170,22 +1106,6 @@ export default function MoviePage({
         />
       )}
 
-      {showDownload && (
-        <DownloadModal
-          onClose={() => setShowDownload(false)}
-          m3u8Url={m3u8Url}
-          subtitles={interceptedSubs}
-          mediaName={mediaName}
-          downloaderFolder={downloaderFolder}
-          setDownloaderFolder={handleSetDownloaderFolder}
-          onOpenSettings={onSettings}
-          onDownloadStarted={onDownloadStarted}
-          mediaId={item.id}
-          mediaType="movie"
-          posterPath={d.poster_path}
-          tmdbId={item.id}
-        />
-      )}
     </div>
   );
 }

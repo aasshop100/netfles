@@ -36,7 +36,6 @@ import {
   StarIcon,
   PlayIcon,
   TVIcon,
-  DownloadIcon,
   WatchedIcon,
   TrailerIcon,
   RatingShieldIcon,
@@ -45,7 +44,6 @@ import {
   ShieldBlockIcon,
   PopOutIcon,
 } from "../components/Icons";
-import DownloadModal from "../components/DownloadModal";
 import TrailerModal from "../components/TrailerModal";
 import BlockedStatsModal from "../components/BlockedStatsModal";
 import { useBlockedStats } from "../utils/useBlockedStats";
@@ -358,12 +356,9 @@ export default function TVPage({
   saveProgress,
   onBack,
   onSettings,
-  onDownloadStarted,
   watched,
   onMarkWatched,
   onMarkUnwatched,
-  downloads,
-  onGoToDownloads,
 }) {
   const [details, setDetails] = useState(null);
   const [seasonData, setSeasonData] = useState(null);
@@ -375,7 +370,6 @@ export default function TVPage({
   const [playing, setPlaying] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingSeason, setLoadingSeason] = useState(false);
-  const [showDownload, setShowDownload] = useState(false);
   const [trailerKey, setTrailerKey] = useState(null);
   const [showTrailer, setShowTrailer] = useState(false);
   const [m3u8Url, setM3u8Url] = useState(null);
@@ -438,9 +432,6 @@ export default function TVPage({
     [item.id, details],
   );
 
-  const [downloaderFolder, setDownloaderFolder] = useState(
-    () => storage.get("downloaderFolder") || "",
-  );
   const [epMenu, setEpMenu] = useState(null); // { x, y, pk }
 
   // Blocked request stats, reset key includes season+episode so counter resets on each ep
@@ -870,22 +861,6 @@ export default function TVPage({
     seasonData,
   ]);
 
-  // ── Downloads lookup map: O(1) per episode instead of O(n) ───────────────
-  const downloadsByEpisodeKey = useMemo(() => {
-    const map = new Map();
-    for (const dl of downloads || []) {
-      if (
-        dl.mediaType === "tv" &&
-        (dl.tmdbId === item.id || dl.mediaId === item.id) &&
-        (dl.status === "completed" ||
-          dl.status === "local" ||
-          dl.status === "downloading")
-      ) {
-        map.set(`s${dl.season}e${dl.episode}`, dl);
-      }
-    }
-    return map;
-  }, [downloads, item.id]);
 
   // Prefer AniList metadata for anime when available
   const displaySeasonCount = useMemo(
@@ -1004,12 +979,6 @@ export default function TVPage({
     ? `tv_${item.id}_s${selectedSeason}e${selectedEp.episode_number}`
     : null;
 
-  // Check if currently-playing episode is already downloaded or downloading
-  const currentEpDownload = selectedEp
-    ? (downloadsByEpisodeKey.get(
-        `s${selectedSeason}e${selectedEp.episode_number}`,
-      ) ?? null)
-    : null;
 
   // Reset auto-mark guard when episode changes
   useEffect(() => {
@@ -1364,10 +1333,6 @@ export default function TVPage({
     [d, selectedSeason, onHistory],
   );
 
-  const handleSetDownloaderFolder = useCallback((folder) => {
-    setDownloaderFolder(folder);
-    storage.set("downloaderFolder", folder);
-  }, []);
 
   // Intercept fullscreen requests from embedded players (vidsrc / 2embed use
   // the native Fullscreen API which would otherwise fullscreen the entire app).
@@ -1842,48 +1807,6 @@ export default function TVPage({
                     ))}
                   </div>
                 )}
-                <button
-                  className="player-overlay-btn"
-                  onClick={() =>
-                    currentEpDownload
-                      ? onGoToDownloads?.(currentEpDownload.id)
-                      : (setShowSourceMenu(false), setShowDownload(true))
-                  }
-                  title={
-                    currentEpDownload
-                      ? currentEpDownload.status === "downloading"
-                        ? "Downloading… - view in Downloads"
-                        : "Already downloaded - view in Downloads"
-                      : "Download"
-                  }
-                >
-                  {currentEpDownload ? (
-                    <span
-                      className="player-downloaded-icon"
-                      style={{
-                        color:
-                          currentEpDownload.status === "downloading"
-                            ? "var(--red)"
-                            : "#4caf50",
-                      }}
-                    >
-                      {currentEpDownload.status === "downloading" ? "↓" : "✓"}
-                    </span>
-                  ) : (
-                    <DownloadIcon />
-                  )}
-                  {!currentEpDownload && m3u8Url && (
-                    <span className="player-overlay-dot" />
-                  )}
-                  {!supportsProgress && (
-                    <span
-                      className="player-no-progress-hint"
-                      title="No automatic progress tracking for this source"
-                    >
-                      ⚠ no tracking
-                    </span>
-                  )}
-                </button>
 
                 {/* Skip controls are injected directly into the webview DOM*/}
 
@@ -2103,11 +2026,9 @@ export default function TVPage({
                         epWatched={!!watched?.[pk]}
                         playing={playing}
                         selectedEpNumber={selectedEp?.episode_number}
-                        downloadsByEpisodeKey={downloadsByEpisodeKey}
                         restricted={restricted}
                         onPlay={playEpisode}
                         onContextMenu={setEpMenu}
-                        onGoToDownloads={onGoToDownloads}
                       />
                     );
                   })}
@@ -2166,24 +2087,6 @@ export default function TVPage({
         />
       )}
 
-      {showDownload && (
-        <DownloadModal
-          onClose={() => setShowDownload(false)}
-          m3u8Url={m3u8Url}
-          subtitles={interceptedSubs}
-          mediaName={mediaName}
-          downloaderFolder={downloaderFolder}
-          setDownloaderFolder={handleSetDownloaderFolder}
-          onOpenSettings={onSettings}
-          onDownloadStarted={onDownloadStarted}
-          mediaId={item.id}
-          mediaType="tv"
-          season={selectedSeason}
-          episode={selectedEp?.episode_number}
-          posterPath={d.poster_path}
-          tmdbId={item.id}
-        />
-      )}
     </div>
   );
 }
@@ -2205,20 +2108,15 @@ const EpisodeCard = memo(function EpisodeCard({
   epWatched,
   playing,
   selectedEpNumber,
-  downloadsByEpisodeKey,
   restricted,
   onPlay,
   onContextMenu,
-  onGoToDownloads,
 }) {
   const pk = `tv_${itemId}_s${selectedSeason}e${ep.episode_number}`;
   const isPlaying = playing && selectedEpNumber === ep.episode_number;
   const epUnreleased = ep.air_date
     ? new Date(ep.air_date) > _todayForEpisodes
     : false;
-  const epDownload =
-    downloadsByEpisodeKey.get(`s${selectedSeason}e${ep.episode_number}`) ??
-    null;
 
   return (
     <div
@@ -2279,36 +2177,6 @@ const EpisodeCard = memo(function EpisodeCard({
         >
           E{ep.episode_number}
           {epWatched && <WatchedIcon size={14} />}
-          {epDownload && (
-            <span
-              className="ep-downloaded-badge"
-              title={
-                epDownload.status === "downloading"
-                  ? "Downloading… - click to view in Downloads"
-                  : "Downloaded - click to view in Downloads"
-              }
-              style={{
-                borderColor:
-                  epDownload.status === "downloading"
-                    ? "rgba(229,9,20,0.5)"
-                    : "rgba(72,199,116,0.5)",
-                color:
-                  epDownload.status === "downloading"
-                    ? "var(--red)"
-                    : "#4caf50",
-                background:
-                  epDownload.status === "downloading"
-                    ? "rgba(229,9,20,0.12)"
-                    : "rgba(72,199,116,0.18)",
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                onGoToDownloads?.(epDownload.id);
-              }}
-            >
-              ↓
-            </span>
-          )}
         </div>
         <div className="episode-name">{ep.name}</div>
         <EpisodeDesc overview={ep.overview} episodeName={ep.name} />
