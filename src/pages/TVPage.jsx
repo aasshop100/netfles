@@ -651,6 +651,10 @@ export default function TVPage({
   useEffect(() => {
     if (!playing || !selectedEp || !isAsync) return;
     if (resolvedPlayerUrl || resolvingUrl) return;
+    if (!window.electron) {
+      setResolveError("AllManga is only available in the desktop app.");
+      return;
+    }
     setResolvingUrl(true);
     setResolveError(null);
     const epNum = selectedEp.episode_number;

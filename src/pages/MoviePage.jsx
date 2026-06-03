@@ -300,6 +300,10 @@ export default function MoviePage({
   useEffect(() => {
     if (!playing || !sourceIsAsync(playerSource)) return;
     if (resolvedPlayerUrl || resolvingUrl) return;
+    if (!window.electron) {
+      setResolveError("AllManga is only available in the desktop app.");
+      return;
+    }
     setResolvingUrl(true);
     setResolveError(null);
     const startTime = storage.get("dlTime_" + progressKey) || 0;
@@ -422,19 +426,7 @@ export default function MoviePage({
     };
   }, []);
 
-  // Attach webview load events so we know when the new source has painted
-  useEffect(() => {
-    if (!playing) return;
-    const wv = webviewRef.current;
-    if (!wv) return;
-    const done = () => setWebviewLoading(false);
-    wv.addEventListener("did-finish-load", done);
-    wv.addEventListener("did-fail-load", done);
-    return () => {
-      wv.removeEventListener("did-finish-load", done);
-      wv.removeEventListener("did-fail-load", done);
-    };
-  }, [playing, playerSource, item.id]);
+  // For iframe: loading is cleared via onLoad/onError props directly on the element
 
   // ── Auto-track progress + auto-watched every 5s ──────────────────────────
   useEffect(() => {
@@ -901,7 +893,7 @@ export default function MoviePage({
                 </button>
               </div>
             )}
-            <webview
+            <iframe
               ref={webviewRef}
               src={
                 pipOpen
@@ -919,9 +911,10 @@ export default function MoviePage({
                         playerSubLang,
                       )
               }
-              partition="persist:player"
-              allowpopups="false"
-              sandbox="allow-scripts allow-same-origin allow-forms"
+              allow="autoplay; fullscreen; encrypted-media"
+              allowFullScreen
+              onLoad={() => setWebviewLoading(false)}
+              onError={() => setWebviewLoading(false)}
               style={{
                 position: "absolute",
                 inset: 0,
