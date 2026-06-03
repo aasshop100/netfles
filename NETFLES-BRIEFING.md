@@ -692,7 +692,8 @@ git push origin main
 - [x] `index.html` → `<title>NETFLES</title>`
 - [x] `src/components/Sidebar.jsx` → "NETFLES"
 - [x] `src/components/WindowTitlebar.jsx` → "NETFLES"
-- [x] NETFLES brand label added top-left of home hero (red, bold)
+- [x] NETFLES wordmark in top navbar (desktop) — red, Bebas Neue, letter-spaced
+- [x] NETFLES brand label on hero (mobile) — large, red, top-left
 - [ ] `public/logo.svg` → replaced with custom NETFLES logo
 
 ### Electron → Web App
@@ -702,13 +703,23 @@ git push origin main
 - [x] Converted `<webview>` to `<iframe>` in MoviePage + TVPage (browser compatible)
 - [x] Guarded `window.electron.resolveAllManga` — shows friendly error in browser instead of crashing
 - [x] `.env.local` created for local dev (gitignored — never pushed)
-- [ ] Deleted `src/ipc/downloads.js` — download feature removed ❌
-- [ ] Deleted/hidden `src/components/DownloadModal.jsx`
-- [ ] Deleted/hidden `src/pages/DownloadsPage.jsx`
-- [ ] Removed Downloads link from Sidebar
+- [x] Deleted `src/ipc/downloads.js` — download feature removed
+- [x] Deleted `src/components/DownloadModal.jsx`
+- [x] Deleted `src/pages/DownloadsPage.jsx`
+- [x] Removed all download state, buttons, and nav from App, MoviePage, TVPage, Sidebar
 - [x] Made app fully responsive (mobile-friendly)
 - [x] Tested locally with `npm run dev` — app loads in browser
 - [x] Tested responsiveness in Chrome DevTools at 375px, 768px, 1280px
+
+### UI Redesign (Netflix-modern)
+- [x] Sidebar → transparent top navbar (turns solid on scroll)
+- [x] Hero: 82vh cinematic, subtle zoom-out on hover, stronger gradient
+- [x] Cards: Netflix scale-up hover effect, no border
+- [x] Buttons: bolder, smoother hover with scale
+- [x] Section titles: clean sans-serif (no separator line)
+- [x] Detail pages: padding clears navbar, better poster shadow
+- [x] Library & Settings: top padding clears navbar
+- [x] Mobile bottom nav: icon + label layout, red active state
 
 ### GitHub
 - [x] Created GitHub repo `netfles` (public)
@@ -731,10 +742,9 @@ git push origin main
 
 ### Still To Do / Known Limitations
 - [ ] `public/logo.svg` — replace with a custom NETFLES logo if desired
-- [ ] Clean up leftover download files (`src/ipc/downloads.js`, `DownloadModal.jsx`, `DownloadsPage.jsx`)
-- [ ] Ads on streaming sources — cannot block in browser (Electron-only feature). Workarounds: AdGuard DNS on phone, Firefox + uBlock Origin, or switch default source to Videasy
-- [ ] AllManga source only works in Electron desktop app — browser shows friendly error. Other sources (Videasy, Vidking, VidSrc) work fine in browser
 - [ ] Test upstream sync workflow manually via GitHub → Actions tab → Run workflow
+- [ ] Ads on streaming sources — cannot block in browser (Electron-only). Workarounds: AdGuard DNS (`94.140.14.14`) on phone, or Firefox + uBlock Origin
+- [ ] AllManga source — desktop app only. Browser shows friendly error message. Use Videasy or Vidking instead
 
 ---
 
