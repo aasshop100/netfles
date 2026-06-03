@@ -174,7 +174,7 @@ export const PLAYER_SOURCES = [
     note: "Good for anime",
     supportsProgress: false,
     colorParam: null,
-    langParam: null,
+    langParam: "ds_lang",
     params: {},
     movieUrl: (id) => `https://vidsrc.xyz/embed/movie?tmdb=${id}`,
     tvUrl: (id, season, ep) =>

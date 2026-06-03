@@ -81,7 +81,7 @@ export default function App() {
     const accentHex = inPlayer
       ? (ACCENT_PRESETS.find((p) => p.id === accentId)?.color ?? null)
       : null;
-    const subtitleLang = storage.get(STORAGE_KEYS.SUBTITLE_LANG) || null;
+    const subtitleLang = storage.get(STORAGE_KEYS.SUBTITLE_LANG) || "en";
     return { accentColor: accentHex, subtitleLang };
   };
   const [playerSettings, setPlayerSettings] = useState(readPlayerSettings);
