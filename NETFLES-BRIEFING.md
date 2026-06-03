@@ -751,11 +751,16 @@ git push origin main
 - If a movie shows but won't play → try switching sources (Videasy → VidSrc → Vidking)
 - If a source has a video but TMDB doesn't list it → it will never appear in the app
 
+### Anime Support
+- [x] Anime series and movies now play in browser via Videasy (no longer crashes)
+- [x] Browser auto-detects anime content → uses Videasy instead of AllManga
+- [x] AllManga still used on Electron desktop app (unchanged)
+- ℹ️ AllManga source button will still show an error if manually selected in browser — that's expected
+
 ### Still To Do / Known Limitations
 - [ ] `public/logo.svg` — replace with a custom NETFLES logo if desired
 - [ ] Test upstream sync workflow manually via GitHub → Actions tab → Run workflow
 - [ ] Ads on streaming sources — cannot block in browser (Electron-only). Workarounds: AdGuard DNS (`94.140.14.14`) on phone, or Firefox + uBlock Origin
-- [ ] AllManga source — desktop app only. Browser shows friendly error. Use Videasy or Vidking instead
 
 ---
 
