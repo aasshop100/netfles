@@ -755,7 +755,11 @@ git push origin main
 - [x] Anime series and movies now play in browser via Videasy (no longer crashes)
 - [x] Browser auto-detects anime content → uses Videasy instead of AllManga
 - [x] AllManga still used on Electron desktop app (unchanged)
-- ℹ️ AllManga source button will still show an error if manually selected in browser — that's expected
+- [x] Added **VidSrc 2** (vidsrc.xyz) — large anime library, widely used
+- [x] Added **EmbedSU** (embed.su) — additional anime fallback source
+- ℹ️ AllManga source button will still show an error if manually selected in browser — expected
+- ℹ️ No single source has every anime. If one fails → switch sources in the player
+- ℹ️ Recommended order for anime: Videasy → VidSrc 2 → EmbedSU → VidSrc → Vidking
 
 ### Still To Do / Known Limitations
 - [ ] `public/logo.svg` — replace with a custom NETFLES logo if desired
