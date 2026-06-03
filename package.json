@@ -1,7 +1,7 @@
 {
-  "name": "streambert",
+  "name": "netfles",
   "version": "2.5.0",
-  "description": "Streambert Desktop App",
+  "description": "NETFLES Web App",
   "author": {
     "name": "truelockmc",
     "email": "anonyson@proton.me"
@@ -35,7 +35,7 @@
   },
   "build": {
     "appId": "com.truelockmc.streambert",
-    "productName": "Streambert",
+    "productName": "NETFLES",
     "asar": true,
     "compression": "normal",
     "directories": {
