@@ -1,0 +1,51 @@
+name: Sync Upstream Streambert
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight UTC
+  workflow_dispatch:       # Can also be triggered manually
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout NETFLES repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch upstream Streambert
+        run: |
+          git remote add upstream https://github.com/truelockmc/streambert.git || true
+          git fetch upstream
+
+      - name: Create sync branch
+        run: |
+          git checkout -b upstream-sync-$(date +%Y%m%d) || git checkout upstream-sync-$(date +%Y%m%d)
+          git merge upstream/main --no-commit --no-ff || true
+
+      - name: Open Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: upstream-sync-${{ github.run_number }}
+          title: "⬆️ Upstream Sync: Streambert Update"
+          body: |
+            ## Streambert has been updated!
+
+            This PR was automatically created by the upstream sync workflow.
+
+            ### ⚠️ Before merging, check these protected NETFLES branding files:
+            - [ ] `package.json` — contains app name "NETFLES"
+            - [ ] `index.html` — contains `<title>NETFLES</title>`
+            - [ ] `public/logo.svg` — NETFLES logo
+            - [ ] `src/components/Sidebar.jsx` — displays NETFLES in UI
+            - [ ] `src/components/WindowTitlebar.jsx` — displays NETFLES in titlebar
+            - [ ] `vite.config.js` — contains `base: '/netfles/'` for GitHub Pages
+
+            If **any of the above are touched** → review carefully before merging ⚠️
+            If **none of the above are touched** → safe to merge ✅
+
+            > 💡 Reminder: New movies/shows are NOT related to this. Content comes live from TMDB API automatically.
+          labels: upstream-sync

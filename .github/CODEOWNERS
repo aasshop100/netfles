@@ -1,0 +1,7 @@
+# NETFLES branding & config — always review before merging
+package.json @aasshop100
+index.html @aasshop100
+public/logo.svg @aasshop100
+vite.config.js @aasshop100
+src/components/Sidebar.jsx @aasshop100
+src/components/WindowTitlebar.jsx @aasshop100
