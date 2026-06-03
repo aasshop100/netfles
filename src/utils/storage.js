@@ -116,17 +116,26 @@ export function formatBytes(bytes) {
 const _isElectronSecure =
   typeof window !== "undefined" && !!window.electron?.secureGet;
 
+const SECURE_PREFIX = "netfles_secure_";
+
 export const secureStorage = {
   /** Read an encrypted value. Returns null if not set. */
   async get(key) {
-    if (!_isElectronSecure) return null;
-    return window.electron.secureGet(key);
+    if (_isElectronSecure) return window.electron.secureGet(key);
+    try {
+      return localStorage.getItem(SECURE_PREFIX + key) || null;
+    } catch {
+      return null;
+    }
   },
 
   /** Write an encrypted value. Pass null/empty to delete. */
   async set(key, value) {
-    if (!_isElectronSecure) return;
-    return window.electron.secureSet(key, value ?? "");
+    if (_isElectronSecure) return window.electron.secureSet(key, value ?? "");
+    try {
+      if (!value) localStorage.removeItem(SECURE_PREFIX + key);
+      else localStorage.setItem(SECURE_PREFIX + key, value);
+    } catch {}
   },
 };
 

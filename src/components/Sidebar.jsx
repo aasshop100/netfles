@@ -125,14 +125,6 @@ export default function Sidebar({
         icon={<HistoryIcon />}
         label="Library & History"
       />
-      <SideBtn
-        active={page === "downloads"}
-        onClick={() => onNavigate("downloads")}
-        icon={<DownloadsQueueIcon />}
-        label="Downloads"
-        badge={activeDownloads > 0 ? activeDownloads : null}
-      />
-
       <div className="sidebar-sep" />
 
       <div className="sidebar-saved">
@@ -224,15 +216,6 @@ export default function Sidebar({
           icon={<SettingsIcon />}
           label="Settings"
         />
-        <button
-          className="sidebar-btn"
-          onClick={() => window.electron?.quitApp?.()}
-          title="Quit App"
-          style={{ color: "#e53e3e", marginTop: 4 }}
-        >
-          <QuitIcon />
-          <span className="tooltip">Quit App</span>
-        </button>
       </div>
     </div>
   );
