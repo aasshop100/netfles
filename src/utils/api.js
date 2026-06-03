@@ -168,6 +168,32 @@ export const PLAYER_SOURCES = [
       `https://www.vidking.net/embed/tv/${id}/${season}/${ep}`,
   },
   {
+    id: "vidsrc2",
+    label: "VidSrc 2",
+    tag: null,
+    note: "Good for anime",
+    supportsProgress: false,
+    colorParam: null,
+    langParam: null,
+    params: {},
+    movieUrl: (id) => `https://vidsrc.xyz/embed/movie?tmdb=${id}`,
+    tvUrl: (id, season, ep) =>
+      `https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${season}&episode=${ep}`,
+  },
+  {
+    id: "embedsu",
+    label: "EmbedSU",
+    tag: null,
+    note: "Good for anime",
+    supportsProgress: false,
+    colorParam: null,
+    langParam: null,
+    params: {},
+    movieUrl: (id) => `https://embed.su/embed/movie/${id}`,
+    tvUrl: (id, season, ep) =>
+      `https://embed.su/embed/tv/${id}/${season}/${ep}`,
+  },
+  {
     id: "allmanga",
     label: "AllManga",
     tag: "ANIME",
