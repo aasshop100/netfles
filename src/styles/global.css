@@ -1648,7 +1648,7 @@ body.no-anim *::after {
 .toast {
     position: fixed;
     bottom: 24px;
-    left: calc(var(--sidebar) + 24px);
+    left: 24px;
     z-index: 500;
     background: var(--surface2);
     border: 1px solid var(--border);

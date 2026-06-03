@@ -975,7 +975,7 @@ export default function App() {
             style={{
               position: "fixed",
               bottom: 24,
-              left: "calc(var(--sidebar) + 24px)",
+              left: 24,
               zIndex: 500,
               background: "var(--surface2)",
               border: "1px solid var(--border)",

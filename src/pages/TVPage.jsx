@@ -1016,15 +1016,12 @@ export default function TVPage({
     };
   }, []);
 
-  // Attach webview load events so we know when the new source has painted.
-  // Also poll for video duration so AniSkip markers appear without waiting for the 5s progress tick.
+  // Loading is cleared via onLoad/onError props on the iframe element.
+  // Poll for video duration so AniSkip markers appear without waiting for the 5s progress tick.
   useEffect(() => {
     if (!playing) return;
     const wv = webviewRef.current;
-    if (!wv) return;
-    const done = () => setWebviewLoading(false);
-    wv.addEventListener("did-finish-load", done);
-    wv.addEventListener("did-fail-load", done);
+    if (!wv || !wv.executeJavaScript) return; // iframe doesn't support executeJavaScript
 
     // Poll up to 30s for video duration (metadata may load after buffering starts)
     let attempts = 0;
@@ -1039,7 +1036,6 @@ export default function TVPage({
         );
         if (dur) {
           durationRef.current = dur;
-          // let markers re-render
           setSkipTimings((t) => (t ? { ...t } : t));
           clearInterval(pollDuration);
         }
@@ -1047,8 +1043,6 @@ export default function TVPage({
     }, 1000);
 
     return () => {
-      wv.removeEventListener("did-finish-load", done);
-      wv.removeEventListener("did-fail-load", done);
       clearInterval(pollDuration);
     };
   }, [playing, playerSource, item.id, selectedEp?.episode_number]);
@@ -1146,12 +1140,11 @@ export default function TVPage({
             result = await window.electron.queryVideoProgress(
               wv.getWebContentsId(),
             );
-          } else {
+          } else if (wv.executeJavaScript) {
             result = await wv.executeJavaScript(`
               (() => {
                 const v = document.querySelector('video')
                 if (!v || !v.duration || v.duration === Infinity || v.paused) return null
-                // Re-attach seek tracker if video element was recreated (e.g. quality change)
                 if (!v._seekTracked) {
                   v._seekTracked = true
                   v.addEventListener('seeked', () => {
@@ -1239,7 +1232,7 @@ export default function TVPage({
             }
             const p = Math.floor((ct / result.duration) * 100);
             saveProgressRef.current(currentProgressKey, Math.min(p, 100));
-            // Also persist actual seconds so DownloadsPage can show resume position
+            // Also persist actual seconds for resume position
             storage.set("dlTime_" + currentProgressKey, Math.floor(ct));
 
             // Auto-mark watched when remaining time ≤ threshold
@@ -1276,7 +1269,7 @@ export default function TVPage({
   const seekBy = useCallback(async (seconds) => {
     try {
       const wv = webviewRef.current;
-      if (!wv) return;
+      if (!wv || !wv.executeJavaScript) return;
       await wv.executeJavaScript(`
         (() => {
           const v = document.querySelector('video');
@@ -1289,6 +1282,7 @@ export default function TVPage({
   useEffect(() => {
     const wv = webviewRef.current;
     if (!wv || !playing || playerSource !== "allmanga") return;
+    if (!wv.executeJavaScript) return; // not available in browser iframe
 
     const inject = () => {
       wv.executeJavaScript(INJECT_SKIP_CONTROLS).catch(() => {});
@@ -1641,7 +1635,7 @@ export default function TVPage({
                     </button>
                   </div>
                 )}
-                <webview
+                <iframe
                   ref={webviewRef}
                   src={
                     pipOpen
@@ -1659,9 +1653,10 @@ export default function TVPage({
                             playerSubLang,
                           )
                   }
-                  partition="persist:player"
-                  allowpopups="false"
-                  sandbox="allow-scripts allow-same-origin allow-forms"
+                  allow="autoplay; fullscreen; encrypted-media"
+                  allowFullScreen
+                  onLoad={() => setWebviewLoading(false)}
+                  onError={() => setWebviewLoading(false)}
                   style={{
                     position: "absolute",
                     inset: 0,
