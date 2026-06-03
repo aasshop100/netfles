@@ -76,10 +76,8 @@ function ExternalLink({ href, className, children }) {
     <a
       className={className}
       href={href}
-      onClick={(e) => {
-        e.preventDefault();
-        window.electron.openExternal(href);
-      }}
+      target="_blank"
+      rel="noopener noreferrer"
     >
       {children}
     </a>
@@ -121,7 +119,7 @@ export default function SetupScreen({ onSave, onSkip }) {
         <div className="apikey-logo">
           <StreambertLogo />
         </div>
-        <div className="apikey-title">STREAMBERT</div>
+        <div className="apikey-title">NETFLES</div>
         <p className="apikey-sub">
           Enter your <strong>free</strong> TMDB{" "}
           <strong>Read Access Token</strong> to get started.
