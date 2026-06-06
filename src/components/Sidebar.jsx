@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { imgUrl } from "../utils/api";
 import {
-  StreambertLogo,
   HomeIcon,
   SearchIcon,
   HistoryIcon,
@@ -107,14 +106,6 @@ export default function Sidebar({
 
   return (
     <div className={`sidebar${scrolled ? " scrolled" : ""}`}>
-      <div
-        className="sidebar-logo"
-        onClick={() => onNavigate("home")}
-        title="NETFLES"
-      >
-        <StreambertLogo />
-      </div>
-
       {canGoBack && (
         <SideBtn onClick={onBack} icon={<BackIcon />} label="Back (Ctrl+Z)" />
       )}
