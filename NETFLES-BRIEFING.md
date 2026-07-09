@@ -817,7 +817,49 @@ git push origin main
 | 2026-06-03 | UI redesign (Netflix-modern), download feature removed |
 | 2026-06-03 | 9 streaming sources added, anime browser fix, English subtitle default |
 | 2026-06-03 | **Critical bug fix** — TV series black player (webview→iframe), all Electron guards |
+| 2026-07-10 | Custom home-screen icon (Lester's photo) + fullscreen PWA (manifest + Apple meta tags) |
+| 2026-07-10 | Homepage rows redesigned as Netflix-style swipe rows (new `ScrollRow` component) |
+| 2026-07-10 | Mobile bottom nav restyled as a floating rounded bar; hid keyboard-shortcuts "?" on mobile |
+| 2026-07-10 | Settings trimmed for web: hid desktop-only sections + dead sub-controls (all `isElectron`-gated) |
 
 ---
 
-*Last updated: 2026-06-03 — Briefing maintained with Claude Code (claude.ai). Good luck Lester! 🚀*
+## 🗒️ 2026-07-10 Session — Mobile/Web Polish (details)
+
+All changes below are live on `https://aasshop100.github.io/netfles` and were verified
+with clean production builds + successful GitHub Pages deploys. **Auto-update untouched**
+(TMDB live content + `sync-upstream.yml` daily PRs both confirmed intact).
+
+### 1. Custom home-screen icon + fullscreen PWA
+- Generated `public/apple-touch-icon.png` (180×180, from Lester's photo), plus `icon-192.png` / `icon-512.png`
+- Added `public/manifest.json` (`display: standalone`) + Apple/PWA meta tags in `index.html`
+- Result: home-screen icon shows the photo and the app launches fullscreen (no Safari bars)
+- ⚠️ To change the icon: replace the PNGs in `public/`, rebuild, push, then **delete & re-add** the
+  home-screen shortcut on iOS (iOS caches the old icon)
+
+### 2. Netflix-style swipe rows
+- New file `src/components/ScrollRow.jsx` — horizontal swipe/scroll rows with hover arrows (desktop)
+  and native touch swipe (mobile); reuses `MediaCard`
+- Replaced the auto-rotating `TrendingCarousel` on all 6 homepage rows in `HomePage.jsx`
+- `TrendingCarousel` kept in the codebase for easy revert; new CSS scoped to `.srow-*`
+
+### 3. Floating bottom nav + cleaner mobile bar
+- Mobile bottom nav (`.sidebar` in the `max-width:768px` media query) restyled as a floating
+  rounded bar (detached edges, rounded corners, shadow, blur, red-highlight active tab)
+- Hid the keyboard-shortcuts "?" button on mobile (no keyboard on phones) — desktop still shows it
+
+### 4. Settings trimmed for web (all `isElectron`-gated — desktop app keeps everything)
+- Hidden **sections** on web: Updates & API, Subtitles (download), Downloads, Notifications
+- Hidden **dead sub-controls** on web: Anime Intro Skip (AllManga/desktop only), Font Size
+  (Electron zoom only), Install Location, Delete All Downloads
+- Remaining 6 sections all fully functional on web: Age Rating, Playback, Interface, Library,
+  Backup & Restore, Storage & Data
+
+### Note on subtitles (investigated, no code change)
+- Default source **Videasy has no subtitle URL parameter** — captions can't be force-defaulted on it.
+- Only VidSrc / VidSrc 2 honor `ds_lang=en` (already wired). Per-title fix: switch that title's
+  source to VidSrc via the in-player Source button. Decision: kept Videasy default, no change.
+
+---
+
+*Last updated: 2026-07-10 — Briefing maintained with Claude Code (claude.ai). Good luck Lester! 🚀*
