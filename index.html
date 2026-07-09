@@ -5,6 +5,15 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>NETFLES</title>
         <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+        <!-- Home-screen / PWA icon (iOS uses apple-touch-icon; PNG required) -->
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#0a0a0a" />
+        <!-- Launch fullscreen (no Safari bars) when opened from the home screen -->
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="NETFLES" />
         <!-- Preconnect to streaming sources for faster first load -->
         <link rel="preconnect" href="https://player.videasy.net" crossorigin />
         <link rel="dns-prefetch" href="https://player.videasy.net" />
