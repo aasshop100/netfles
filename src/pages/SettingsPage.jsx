@@ -1532,8 +1532,8 @@ function AppearanceSection() {
         </div>
       </div>
 
-      {/* Font Size */}
-      <div style={{ marginBottom: 24 }}>
+      {/* Font Size (Electron zoom only; hidden on web) */}
+      <div style={{ marginBottom: 24, display: isElectron ? undefined : "none" }}>
         <div
           style={{
             fontSize: 13,
@@ -3058,7 +3058,13 @@ function SettingsTopBar({ sectionRefs, contentRef }) {
                 padding: 6,
               }}
             >
-              {SECTION_NAV.map((s) => (
+              {SECTION_NAV.filter(
+                (s) =>
+                  isElectron ||
+                  !["updates", "subtitles", "downloads", "notifications"].includes(
+                    s.id,
+                  ),
+              ).map((s) => (
                 <button
                   key={s.id}
                   onMouseDown={() => scrollTo(s.id)}
@@ -3413,7 +3419,10 @@ export default function SettingsPage({
         {/* ══════════════════════════════════════════════════════════════════ */}
         {/* GROUP: GENERAL                                                     */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <div ref={secUpdates} style={{ scrollMarginTop: 80 }}>
+        <div
+          ref={secUpdates}
+          style={{ scrollMarginTop: 80, display: isElectron ? undefined : "none" }}
+        >
           <SectionGroupHeader
             title="General"
             subtitle="App version, updates, API credentials and Languages"
@@ -3707,8 +3716,13 @@ export default function SettingsPage({
             )}
           </div>
 
-          {/* Intro Skip */}
-          <div style={{ marginBottom: 40 }}>
+          {/* Intro Skip (AllManga/desktop only; hidden on web) */}
+          <div
+            style={{
+              marginBottom: 40,
+              display: isElectron ? undefined : "none",
+            }}
+          >
             <div className="settings-section-title">Anime Intro Skip</div>
             <div
               style={{
@@ -3832,7 +3846,10 @@ export default function SettingsPage({
         {/* ══════════════════════════════════════════════════════════════════ */}
         {/* GROUP: SUBTITLES                                                   */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <div ref={secSubtitles} style={{ scrollMarginTop: 80 }}>
+        <div
+          ref={secSubtitles}
+          style={{ scrollMarginTop: 80, display: isElectron ? undefined : "none" }}
+        >
           <SectionGroupHeader
             title="Subtitles"
             subtitle="Subtitle download source, preferred language, and API key"
@@ -3843,7 +3860,10 @@ export default function SettingsPage({
         {/* ══════════════════════════════════════════════════════════════════ */}
         {/* GROUP: DOWNLOADS                                                   */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <div ref={secDownloads} style={{ scrollMarginTop: 80 }}>
+        <div
+          ref={secDownloads}
+          style={{ scrollMarginTop: 80, display: isElectron ? undefined : "none" }}
+        >
           <SectionGroupHeader
             title="Downloads"
             subtitle="Where downloaded video files are saved on disk"
@@ -3903,7 +3923,10 @@ export default function SettingsPage({
         {/* ══════════════════════════════════════════════════════════════════ */}
         {/* GROUP: NOTIFICATIONS                                               */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <div ref={secNotifications} style={{ scrollMarginTop: 80 }}>
+        <div
+          ref={secNotifications}
+          style={{ scrollMarginTop: 80, display: isElectron ? undefined : "none" }}
+        >
           <SectionGroupHeader
             title="Notifications"
             subtitle="Desktop alerts for downloads and new episode releases"
@@ -3965,20 +3988,24 @@ export default function SettingsPage({
               overflow: "hidden",
             }}
           >
-            {/* Install location */}
-            <div style={{ padding: "22px 24px" }}>
-              <CleanRow
-                title="Install Location"
-                description="Opens the folder where Streambert is installed."
-                buttonLabel="Open Folder"
-                onAction={async () => {
-                  const p = await window.electron?.getInstallPath?.();
-                  if (p) window.electron.openPath(p);
-                }}
-              />
-            </div>
+            {/* Install location (desktop only; hidden on web) */}
+            {isElectron && (
+              <>
+                <div style={{ padding: "22px 24px" }}>
+                  <CleanRow
+                    title="Install Location"
+                    description="Opens the folder where Streambert is installed."
+                    buttonLabel="Open Folder"
+                    onAction={async () => {
+                      const p = await window.electron?.getInstallPath?.();
+                      if (p) window.electron.openPath(p);
+                    }}
+                  />
+                </div>
 
-            <div style={{ height: 1, background: "var(--border)" }} />
+                <div style={{ height: 1, background: "var(--border)" }} />
+              </>
+            )}
 
             {/* Cache */}
             <div style={{ padding: "22px 24px" }}>
@@ -4009,24 +4036,28 @@ export default function SettingsPage({
               />
             </div>
 
-            <div style={{ height: 1, background: "var(--border)" }} />
+            {/* Delete Downloads (desktop only; hidden on web) */}
+            {isElectron && (
+              <>
+                <div style={{ height: 1, background: "var(--border)" }} />
 
-            {/* Delete Downloads */}
-            <div style={{ padding: "22px 24px" }}>
-              <CleanRow
-                title="Delete All Downloads"
-                description="Permanently deletes all video files that were downloaded through Streambert and removes them from the download list. Only files downloaded through the app will be deleted, nothing else in your folder is touched."
-                buttonLabel="Delete All"
-                onAction={() =>
-                  new Promise((resolve) => {
-                    setShowDeleteDlConfirm(true);
-                    window.__deleteDlConfirmResolve = resolve;
-                  })
-                }
-                sizeLabel={formatBytes(sizes.downloads)}
-                danger
-              />
-            </div>
+                <div style={{ padding: "22px 24px" }}>
+                  <CleanRow
+                    title="Delete All Downloads"
+                    description="Permanently deletes all video files that were downloaded through Streambert and removes them from the download list. Only files downloaded through the app will be deleted, nothing else in your folder is touched."
+                    buttonLabel="Delete All"
+                    onAction={() =>
+                      new Promise((resolve) => {
+                        setShowDeleteDlConfirm(true);
+                        window.__deleteDlConfirmResolve = resolve;
+                      })
+                    }
+                    sizeLabel={formatBytes(sizes.downloads)}
+                    danger
+                  />
+                </div>
+              </>
+            )}
 
             <div style={{ height: 1, background: "var(--border)" }} />
 
