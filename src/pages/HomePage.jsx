@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import MediaCard from "../components/MediaCard";
 import TrendingCarousel from "../components/TrendingCarousel";
+import ScrollRow from "../components/ScrollRow";
 import { PlayIcon, StarIcon } from "../components/Icons";
 import { imgUrl, tmdbFetch } from "../utils/api";
 import { useRatings, getRatingForItem } from "../utils/useRatings";
@@ -419,12 +420,15 @@ export default function HomePage({
               filteredRecommendedItems,
             );
           return (
-            <TrendingCarousel
+            <ScrollRow
               key="recommended"
               items={filteredRecommendedItems}
               title="Recommended for You"
               onSelect={onSelect}
               ratingsMap={enrichedRatingsMap}
+              watched={watched}
+              onMarkWatched={onMarkWatched}
+              onMarkUnwatched={onMarkUnwatched}
             />
           );
         }
@@ -439,12 +443,15 @@ export default function HomePage({
               trendingMovieItems,
             );
           return (
-            <TrendingCarousel
+            <ScrollRow
               key="trendingMovies"
               items={trendingMovieItems}
               title="Trending Movies"
               onSelect={onSelect}
               ratingsMap={enrichedRatingsMap}
+              watched={watched}
+              onMarkWatched={onMarkWatched}
+              onMarkUnwatched={onMarkUnwatched}
             />
           );
         }
@@ -459,12 +466,15 @@ export default function HomePage({
               trendingTVItems,
             );
           return (
-            <TrendingCarousel
+            <ScrollRow
               key="trendingTV"
               items={trendingTVItems}
               title="Trending Series"
               onSelect={onSelect}
               ratingsMap={enrichedRatingsMap}
+              watched={watched}
+              onMarkWatched={onMarkWatched}
+              onMarkUnwatched={onMarkUnwatched}
             />
           );
         }
@@ -474,12 +484,15 @@ export default function HomePage({
           if (viewMode === "list")
             return renderList("topRated", "Top Rated", null, topRatedItems);
           return (
-            <TrendingCarousel
+            <ScrollRow
               key="topRated"
               items={topRatedItems}
               title="Top Rated"
               onSelect={onSelect}
               ratingsMap={enrichedRatingsMap}
+              watched={watched}
+              onMarkWatched={onMarkWatched}
+              onMarkUnwatched={onMarkUnwatched}
             />
           );
         }
@@ -489,12 +502,15 @@ export default function HomePage({
           if (viewMode === "list")
             return renderList("trendingAnime", "Trending Anime", null, animeItems);
           return (
-            <TrendingCarousel
+            <ScrollRow
               key="trendingAnime"
               items={animeItems}
               title="Trending Anime"
               onSelect={onSelect}
               ratingsMap={enrichedRatingsMap}
+              watched={watched}
+              onMarkWatched={onMarkWatched}
+              onMarkUnwatched={onMarkUnwatched}
             />
           );
         }
@@ -504,12 +520,15 @@ export default function HomePage({
           if (viewMode === "list")
             return renderList("popularMovies", "Popular Movies", null, popularMovieItems);
           return (
-            <TrendingCarousel
+            <ScrollRow
               key="popularMovies"
               items={popularMovieItems}
               title="Popular Movies"
               onSelect={onSelect}
               ratingsMap={enrichedRatingsMap}
+              watched={watched}
+              onMarkWatched={onMarkWatched}
+              onMarkUnwatched={onMarkUnwatched}
             />
           );
         }
