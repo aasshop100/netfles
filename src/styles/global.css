@@ -4051,6 +4051,12 @@ html[data-win-titlebar][data-maximized] .main {
         color: var(--red);
     }
 
+    /* Hide the keyboard-shortcuts "?" button on mobile (no keyboard on phones).
+       It is the first child of .sidebar-bottom (Help), before Settings. */
+    .sidebar-bottom .sidebar-btn:first-child {
+        display: none;
+    }
+
     /* Main content fills full width, leaves room for floating bottom nav */
     .main {
         margin-left: 0;
