@@ -3954,23 +3954,44 @@ html[data-win-titlebar][data-maximized] .main {
     /* Sidebar becomes a bottom nav bar */
     .sidebar {
         top: auto;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        width: 100%;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+        left: 16px;
+        right: 16px;
+        width: auto;
         height: 62px;
         flex-direction: row;
         align-items: center;
         justify-content: space-around;
-        padding: 0 4px;
+        padding: 0 6px;
         border-right: none;
-        border-top: 1px solid rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.10);
+        border-radius: 26px;
         gap: 0;
         z-index: 200;
-        background: rgba(14,14,14,0.97) !important;
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        box-shadow: 0 -1px 0 rgba(255,255,255,0.04);
+        background: rgba(20,20,20,0.82) !important;
+        backdrop-filter: blur(28px) saturate(150%);
+        -webkit-backdrop-filter: blur(28px) saturate(150%);
+        box-shadow:
+            0 12px 32px rgba(0,0,0,0.55),
+            0 2px 8px rgba(0,0,0,0.35),
+            inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+
+    /* Active tab gets a soft rounded highlight inside the floating bar */
+    .sidebar-btn.active {
+        color: var(--red);
+    }
+    .sidebar-btn.active::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 46px;
+        height: 40px;
+        border-radius: 16px;
+        background: var(--red-dim);
+        z-index: -1;
     }
 
     /* Hide logo, separator, saved list in bottom nav */
@@ -4030,11 +4051,11 @@ html[data-win-titlebar][data-maximized] .main {
         color: var(--red);
     }
 
-    /* Main content fills full width, leaves room for bottom nav */
+    /* Main content fills full width, leaves room for floating bottom nav */
     .main {
         margin-left: 0;
         height: 100dvh;
-        padding-bottom: 62px;
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 92px);
     }
 
     /* Hero */
