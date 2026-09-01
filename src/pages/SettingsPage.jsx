@@ -19,7 +19,11 @@ import { SUBTITLE_LANGUAGES } from "../utils/subtitles";
 import { DEFAULT_INVIDIOUS_BASE } from "../components/TrailerModal";
 import { RATING_COUNTRIES } from "../utils/ageRating";
 import { WarningIcon } from "../components/Icons";
-import { checkForUpdates } from "../utils/updates";
+import {
+  checkForUpdatesWithFallback,
+  UPDATE_SOURCES,
+  DEFAULT_UPDATE_SOURCE,
+} from "../utils/updates";
 import {
   HOME_ROWS,
   loadHomeLayout,
@@ -537,6 +541,9 @@ function VersionSection() {
   });
   const [autoSaved, setAutoSaved] = useState(false);
   const [currentVersion, setCurrentVersion] = useState("0.0.0");
+  const [updateSource, setUpdateSource] = useState(
+    () => storage.get(STORAGE_KEYS.UPDATE_SOURCE) || DEFAULT_UPDATE_SOURCE,
+  );
 
   useEffect(() => {
     if (window.electron?.getAppVersion) {
@@ -550,13 +557,23 @@ function VersionSection() {
     setChecking(true);
     setResult(null);
     try {
-      const r = await checkForUpdates();
+      const r = await checkForUpdatesWithFallback(updateSource);
       setResult(r);
     } catch (e) {
-      setResult({ error: e.message || "Could not reach GitHub." });
+      setResult({
+        error:
+          e.message ||
+          `Could not reach ${UPDATE_SOURCES[updateSource]?.label || "the update server"}.`,
+      });
     } finally {
       setChecking(false);
     }
+  };
+
+  const changeSource = (src) => {
+    setUpdateSource(src);
+    storage.set(STORAGE_KEYS.UPDATE_SOURCE, src);
+    setResult(null);
   };
 
   const toggleAuto = (val) => {
@@ -608,6 +625,37 @@ function VersionSection() {
           {checking ? "Checking…" : "Check for Updates"}
         </button>
 
+        {/* Update source toggle */}
+        <div
+          style={{
+            display: "inline-flex",
+            border: "1px solid var(--border)",
+            borderRadius: 8,
+            overflow: "hidden",
+          }}
+        >
+          {Object.values(UPDATE_SOURCES).map((src) => (
+            <button
+              key={src.id}
+              onClick={() => changeSource(src.id)}
+              disabled={checking}
+              title={`Check for updates via ${src.label}`}
+              style={{
+                border: "none",
+                padding: "6px 12px",
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: checking ? "not-allowed" : "pointer",
+                background:
+                  updateSource === src.id ? "var(--red)" : "var(--surface2)",
+                color: updateSource === src.id ? "#fff" : "var(--text3)",
+              }}
+            >
+              {src.label}
+            </button>
+          ))}
+        </div>
+
         {result && !result.error && result.hasUpdate && (
           <button
             onClick={() => setShowUpdateModal(true)}
@@ -634,6 +682,13 @@ function VersionSection() {
           >
             🎉 v{result.latest} available. Install Update
           </button>
+        )}
+
+        {result?.usedFallback && (
+          <span style={{ fontSize: 12, color: "var(--text3)" }}>
+            ({UPDATE_SOURCES[result.fallbackFrom]?.label || result.fallbackFrom}{" "}
+            unavailable, used {result.sourceLabel} instead)
+          </span>
         )}
 
         {result && !result.error && !result.hasUpdate && (
@@ -2034,14 +2089,14 @@ function SubtitleSettingsSection() {
                   display: "inline",
                   padding: 0,
                   fontSize: 12,
-                  color: "var(--accent)",
+                  color: "var(--red)",
                   background: "none",
                   border: "none",
                   cursor: "pointer",
                 }}
                 onClick={() =>
                   window.electron?.openExternal(
-                    "https://github.com/truelockmc/streambert/wyzie-tutorial.md",
+                    "https://codeberg.org/truelockmc/streambert/src/branch/main/wyzie-tutorial.md",
                   )
                 }
               >
@@ -2290,6 +2345,131 @@ function NotificationsSection() {
 }
 
 // ── Section Group Header ──────────────────────────────────────────────────────
+function DiscordRpcSection() {
+  const [enabled, setEnabledState] = useState(
+    () => !!storage.get(STORAGE_KEYS.DISCORD_RPC_ENABLED),
+  );
+  const [showCover, setShowCover] = useState(
+    () => storage.get(STORAGE_KEYS.DISCORD_RPC_SHOW_COVER) !== false,
+  );
+  const [showTimestamp, setShowTimestamp] = useState(
+    () => storage.get(STORAGE_KEYS.DISCORD_RPC_SHOW_TIMESTAMP) !== false,
+  );
+  const [showButton, setShowButton] = useState(
+    () => storage.get(STORAGE_KEYS.DISCORD_RPC_SHOW_BUTTON) !== false,
+  );
+  const [saved, setSaved] = useState(false);
+
+  const saveSettings = () => {
+    storage.set(STORAGE_KEYS.DISCORD_RPC_ENABLED, enabled);
+    storage.set(STORAGE_KEYS.DISCORD_RPC_SHOW_COVER, showCover);
+    storage.set(STORAGE_KEYS.DISCORD_RPC_SHOW_TIMESTAMP, showTimestamp);
+    storage.set(STORAGE_KEYS.DISCORD_RPC_SHOW_BUTTON, showButton);
+    window.dispatchEvent(
+      new CustomEvent("streambert:discord-rpc-settings-changed"),
+    );
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const ToggleRow = ({ label, description, value, onChange, disabled }) => (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 14,
+        padding: "16px 0",
+        borderBottom: "1px solid var(--border)",
+        opacity: disabled ? 0.45 : 1,
+        pointerEvents: disabled ? "none" : "auto",
+      }}
+    >
+      <Toggle value={value} onChange={onChange} />
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)" }}>
+          {label}
+        </div>
+        <div
+          style={{
+            fontSize: 12,
+            color: "var(--text3)",
+            marginTop: 3,
+            lineHeight: 1.5,
+          }}
+        >
+          {description}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ marginBottom: 40 }}>
+      <div className="settings-section-title">Discord Rich Presence</div>
+      <div
+        style={{
+          fontSize: 13,
+          color: "var(--text3)",
+          marginBottom: 16,
+          lineHeight: 1.6,
+        }}
+      >
+        Shows what you're currently watching on your Discord profile (title +
+        cover, or "Idling" when nothing is open). Off by default. Requires
+        the Discord desktop client to be running.
+      </div>
+
+      <div
+        style={{
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          borderRadius: 10,
+          padding: "0 16px",
+          marginBottom: 20,
+        }}
+      >
+        <ToggleRow
+          label="Enable Discord Rich Presence"
+          description="Connects to your local Discord client and updates your status automatically."
+          value={enabled}
+          onChange={setEnabledState}
+        />
+        <ToggleRow
+          label="Show cover art"
+          description="Uses the movie/show poster as the large image. When off, only the Streambert icon is shown."
+          value={showCover}
+          onChange={setShowCover}
+          disabled={!enabled}
+        />
+        <ToggleRow
+          label="Show elapsed time"
+          description="Displays how long you've been on the current title's page."
+          value={showTimestamp}
+          onChange={setShowTimestamp}
+          disabled={!enabled}
+        />
+        <ToggleRow
+          label="Show GitHub button"
+          description="Adds a button linking to the Streambert GitHub repository."
+          value={showButton}
+          onChange={setShowButton}
+          disabled={!enabled}
+        />
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <button className="btn btn-primary" onClick={saveSettings}>
+          Save
+        </button>
+        {saved && (
+          <span style={{ fontSize: 13, color: "#48c774" }}>✓ Saved</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Section Group Header ─────────────────────────────────────────────────────
 function SectionGroupHeader({ title, subtitle }) {
   return (
     <div style={{ marginBottom: 32, marginTop: 4 }}>
@@ -2441,6 +2621,21 @@ const SECTION_NAV = [
       "watchlist",
       "new episode",
       "release",
+    ],
+  },
+  {
+    id: "discordRpc",
+    label: "Discord Rich Presence",
+    icon: "🎮",
+    keywords: [
+      "discord",
+      "rich presence",
+      "rpc",
+      "status",
+      "activity",
+      "watching",
+      "idling",
+      "presence",
     ],
   },
   {
@@ -3139,6 +3334,15 @@ export default function SettingsPage({
   const [introSkipMode, setIntroSkipMode] = useState(
     () => storage.get(STORAGE_KEYS.INTRO_SKIP_MODE) || "off",
   );
+  const [autoplayNextEnabled, setAutoplayNextEnabled] = useState(
+    () => storage.get(STORAGE_KEYS.AUTOPLAY_NEXT_ENABLED) ?? true,
+  );
+  const [autoplayNextDuration, setAutoplayNextDuration] = useState(
+    () => storage.get(STORAGE_KEYS.AUTOPLAY_NEXT_DURATION) ?? 5,
+  );
+  const [autoplayNextLayout, setAutoplayNextLayout] = useState(
+    () => storage.get(STORAGE_KEYS.AUTOPLAY_NEXT_LAYOUT) || "right",
+  );
   const [saved, setSaved] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetHovered, setResetHovered] = useState(false);
@@ -3152,6 +3356,7 @@ export default function SettingsPage({
   const secSubtitles = useRef(null);
   const secDownloads = useRef(null);
   const secNotifications = useRef(null);
+  const secDiscordRpc = useRef(null);
   const secInterface = useRef(null);
   const secLibrary = useRef(null);
   const secBackup = useRef(null);
@@ -3164,6 +3369,7 @@ export default function SettingsPage({
     subtitles: secSubtitles,
     downloads: secDownloads,
     notifications: secNotifications,
+    discordRpc: secDiscordRpc,
     interface: secInterface,
     library: secLibrary,
     backup: secBackup,
@@ -3716,6 +3922,160 @@ export default function SettingsPage({
             )}
           </div>
 
+          <Divider />
+
+          {/* Autoplay Next Episode */}
+          <div style={{ marginBottom: 40 }}>
+            <div className="settings-section-title">Autoplay Next Episode</div>
+            <div
+              style={{
+                fontSize: 13,
+                color: "var(--text3)",
+                marginBottom: 16,
+                lineHeight: 1.6,
+              }}
+            >
+              Configure how the player behaves when an episode finishes.
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {/* Enable/Disable Toggle */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <Toggle
+                  value={autoplayNextEnabled}
+                  onChange={(val) => {
+                    setAutoplayNextEnabled(val);
+                    storage.set(STORAGE_KEYS.AUTOPLAY_NEXT_ENABLED, val);
+                    flash();
+                  }}
+                />
+                <div>
+                  <div
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: "var(--text)",
+                    }}
+                  >
+                    Enable Autoplay Next
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: "var(--text3)",
+                      marginTop: 2,
+                    }}
+                  >
+                    Automatically play the next episode when the current one
+                    ends.
+                  </div>
+                </div>
+              </div>
+
+              {autoplayNextEnabled && (
+                <>
+                  {/* Duration input */}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 8,
+                      marginTop: 8,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "var(--text2)",
+                      }}
+                    >
+                      Countdown Duration
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: "var(--text3)",
+                        marginBottom: 4,
+                      }}
+                    >
+                      Number of seconds to display the countdown. Set to 0 to
+                      only show the buttons and not autoplay automatically.
+                    </div>
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 12 }}
+                    >
+                      <input
+                        type="number"
+                        min={0}
+                        max={60}
+                        className="apikey-input"
+                        style={{ width: 90, marginBottom: 0 }}
+                        value={autoplayNextDuration}
+                        onChange={(e) =>
+                          setAutoplayNextDuration(e.target.value)
+                        }
+                        onBlur={() => {
+                          const num = Math.max(
+                            0,
+                            Math.min(
+                              60,
+                              parseInt(autoplayNextDuration, 10) || 0,
+                            ),
+                          );
+                          setAutoplayNextDuration(num);
+                          storage.set(STORAGE_KEYS.AUTOPLAY_NEXT_DURATION, num);
+                          flash();
+                        }}
+                      />
+                      <span style={{ fontSize: 14, color: "var(--text2)" }}>
+                        seconds
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Overlay Layout selection */}
+                  <div style={{ marginTop: 16 }}>
+                    <div
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "var(--text2)",
+                        marginBottom: 8,
+                      }}
+                    >
+                      Overlay Position
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: "var(--text3)",
+                        marginBottom: 12,
+                      }}
+                    >
+                      Choose which side of the player the next episode thumbnail
+                      and details are shown.
+                    </div>
+                    <SettingsSelect
+                      value={autoplayNextLayout}
+                      onChange={(val) => {
+                        setAutoplayNextLayout(val);
+                        storage.set(STORAGE_KEYS.AUTOPLAY_NEXT_LAYOUT, val);
+                        flash();
+                      }}
+                      options={[
+                        { value: "left", label: "Left Side" },
+                        { value: "right", label: "Right Side" },
+                      ]}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          <Divider />
+
           {/* Intro Skip (AllManga/desktop only; hidden on web) */}
           <div
             style={{
@@ -3932,6 +4292,17 @@ export default function SettingsPage({
             subtitle="Desktop alerts for downloads and new episode releases"
           />
           <NotificationsSection />
+        </div>
+
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* GROUP: DISCORD RICH PRESENCE                                       */}
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        <div ref={secDiscordRpc} style={{ scrollMarginTop: 80 }}>
+          <SectionGroupHeader
+            title="Discord Rich Presence"
+            subtitle="Show what you're watching on your Discord profile"
+          />
+          <DiscordRpcSection />
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════ */}

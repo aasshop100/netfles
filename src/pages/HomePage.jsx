@@ -118,11 +118,9 @@ export default function HomePage({
     // For each source, try /recommendations first, fall back to /similar
     const fetches = sources.map((source) => {
       const type = source.media_type === "tv" ? "tv" : "movie";
-      return tmdbFetch(
-        `/${type}/${source.id}/recommendations`,
-        apiKey,
-        { signal: controller.signal },
-      )
+      return tmdbFetch(`/${type}/${source.id}/recommendations`, apiKey, {
+        signal: controller.signal,
+      })
         .then((data) => {
           const results = (data.results || []).map((i) => ({
             ...i,
@@ -130,11 +128,9 @@ export default function HomePage({
           }));
           if (results.length > 0) return results;
           // Fall back to /similar if /recommendations returned nothing
-          return tmdbFetch(
-            `/${type}/${source.id}/similar`,
-            apiKey,
-            { signal: controller.signal },
-          ).then((d) =>
+          return tmdbFetch(`/${type}/${source.id}/similar`, apiKey, {
+            signal: controller.signal,
+          }).then((d) =>
             (d.results || []).map((i) => ({ ...i, media_type: type })),
           );
         })

@@ -184,4 +184,19 @@ contextBridge.exposeInMainWorld("electron", {
   },
   offScheduledBackupRequested: (h) =>
     ipcRenderer.removeListener("scheduled-backup-requested", h),
+
+  fetchReleaseImage: (url) =>
+    ipcRenderer.invoke("fetch-release-image", { url }),
+
+  // Discord Rich Presence (off by default, toggled in Settings)
+  discordRpcSetEnabled: (enabled) =>
+    ipcRenderer.invoke("discord-rpc-set-enabled", enabled),
+  discordRpcUpdateActivity: (activity) =>
+    ipcRenderer.invoke("discord-rpc-update-activity", activity),
 });
+
+if (process.platform === "darwin") {
+  navigator.mediaDevices?.addEventListener("devicechange", () => {
+    ipcRenderer.send("audio-device-changed");
+  });
+}

@@ -34,6 +34,7 @@ export const storage = {
 // Centralised storage key registry
 export const STORAGE_KEYS = {
   API_KEY: "apikey",
+  UPDATE_SOURCE: "updateSource",
   PLAYER_SOURCE: "playerSource",
   ALLMANGA_DUB_MODE: "allmangaDubMode",
   WATCH_PROGRESS: "progress",
@@ -77,15 +78,58 @@ export const STORAGE_KEYS = {
   // Intro skip (anime only, allmanga source)
   // Values: "off" | "auto" | "manual"
   INTRO_SKIP_MODE: "introSkipMode",
+  // Autoplay next preferences
+  AUTOPLAY_NEXT_ENABLED: "autoplayNextEnabled",
+  AUTOPLAY_NEXT_DURATION: "autoplayNextDuration",
+  AUTOPLAY_NEXT_LAYOUT: "autoplayNextLayout",
   // Download page UI preferences
   DL_SORT_BY: "dlSortBy",
   DL_SORT_DIR: "dlSortDir",
   DL_SHOW_UNTRACKED: "dlShowUntracked",
   // Cache for new-episode startup check
   EPISODE_RELEASE_CACHE: "episodeReleaseCache",
+  // Per-episode fallback source when the default (typically AllManga) lacks
+  // the title. Shape: { [epKey]: sourceId }.
+  SOURCE_FAILOVER_CACHE: "sourceFailoverCache",
+  // Discord Rich Presence
+  DISCORD_RPC_ENABLED: "discordRpcEnabled",
+  DISCORD_RPC_SHOW_COVER: "discordRpcShowCover",
+  DISCORD_RPC_SHOW_TIMESTAMP: "discordRpcShowTimestamp",
+  DISCORD_RPC_SHOW_BUTTON: "discordRpcShowButton",
 };
 
 export const getApiKey = () => storage.get(STORAGE_KEYS.API_KEY);
+
+// ── Source failover cache ────────────────────────────────────────────────────
+// AllManga doesn't always have every episode; rather than nag the user every
+// time, remember the working alternate source per (tmdbId, season, ep, dub).
+// Max 200 entries
+const FAILOVER_CACHE_MAX = 200;
+
+export const getFailoverSource = (epKey) => {
+  const cache = storage.get(STORAGE_KEYS.SOURCE_FAILOVER_CACHE) || {};
+  return cache[epKey]?.sourceId || null;
+};
+
+export const setFailoverSource = (epKey, sourceId) => {
+  const cache = storage.get(STORAGE_KEYS.SOURCE_FAILOVER_CACHE) || {};
+  // Evict oldest entries when at capacity (insertion order via Object.keys)
+  const keys = Object.keys(cache);
+  if (keys.length >= FAILOVER_CACHE_MAX) {
+    const evict = keys.slice(0, keys.length - FAILOVER_CACHE_MAX + 1);
+    evict.forEach((k) => delete cache[k]);
+  }
+  cache[epKey] = { sourceId, ts: Date.now() };
+  storage.set(STORAGE_KEYS.SOURCE_FAILOVER_CACHE, cache);
+};
+
+export const clearFailoverSource = (epKey) => {
+  const cache = storage.get(STORAGE_KEYS.SOURCE_FAILOVER_CACHE) || {};
+  if (cache[epKey] !== undefined) {
+    delete cache[epKey];
+    storage.set(STORAGE_KEYS.SOURCE_FAILOVER_CACHE, cache);
+  }
+};
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
