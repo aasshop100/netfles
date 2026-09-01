@@ -17,8 +17,15 @@ import {
   ACCENT_PRESETS,
 } from "./utils/appearance";
 import { collectBackupData } from "./utils/backup";
-import { tmdbFetch, setApiErrorHandlers } from "./utils/api";
+import { tmdbFetch, setApiErrorHandlers, imgUrl } from "./utils/api";
 import { clearAppCaches } from "./utils/storage";
+import {
+  readDiscordRpcSettings,
+  applyDiscordRpcEnabled,
+  sendWatchingActivity,
+  sendIdleActivity,
+  clearActivity as clearDiscordActivity,
+} from "./utils/discordPresence";
 
 import Sidebar from "./components/Sidebar";
 import SearchModal from "./components/SearchModal";
@@ -32,7 +39,10 @@ const MoviePage = lazy(() => import("./pages/MoviePage"));
 const TVPage = lazy(() => import("./pages/TVPage"));
 const LibraryPage = lazy(() => import("./pages/LibraryPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
-import { checkForUpdates } from "./utils/updates";
+import {
+  checkForUpdatesWithFallback,
+  DEFAULT_UPDATE_SOURCE,
+} from "./utils/updates";
 
 export default function App() {
   // apiKey loaded async from secure storage (OS keychain)
@@ -86,6 +96,16 @@ export default function App() {
   };
   const [playerSettings, setPlayerSettings] = useState(readPlayerSettings);
 
+  // ── Discord Rich Presence ──────────────────────────────────────────────────
+  // Off by default. `watchingEpisode` is filled in by TVPage (season/episode
+  // of whatever is currently open) via onEpisodeChange; MoviePage needs no
+  // extra data since title/poster already live on `selected`.
+  const [discordSettings, setDiscordSettings] = useState(
+    readDiscordRpcSettings,
+  );
+  const [watchingEpisode, setWatchingEpisode] = useState(null);
+  const watchStartRef = useRef(null);
+
   // ── Scheduled backup: run on startup if due ─────────────────────────────────
   useEffect(() => {
     if (!window.electron?.onScheduledBackupRequested) return;
@@ -119,7 +139,9 @@ export default function App() {
   // ── Startup update check ─────────────────────────────────────────────────
   useEffect(() => {
     if (!storage.get("autoCheckUpdates")) return;
-    checkForUpdates()
+    const source =
+      storage.get(STORAGE_KEYS.UPDATE_SOURCE) || DEFAULT_UPDATE_SOURCE;
+    checkForUpdatesWithFallback(source)
       .then((r) => {
         if (r.hasUpdate) setUpdateBanner(r);
       })
@@ -455,6 +477,51 @@ export default function App() {
     return () =>
       window.removeEventListener("streambert:player-settings-changed", handler);
   }, []);
+
+  // ── Discord Rich Presence: sync settings + connect/disconnect ─────────────
+  useEffect(() => {
+    applyDiscordRpcEnabled(discordSettings.enabled);
+    if (!discordSettings.enabled) clearDiscordActivity();
+  }, [discordSettings.enabled]);
+
+  useEffect(() => {
+    const handler = () => setDiscordSettings(readDiscordRpcSettings());
+    window.addEventListener("streambert:discord-rpc-settings-changed", handler);
+    return () =>
+      window.removeEventListener(
+        "streambert:discord-rpc-settings-changed",
+        handler,
+      );
+  }, []);
+
+  // Reset episode info + elapsed-time anchor whenever the open title changes
+  useEffect(() => {
+    setWatchingEpisode(null);
+    watchStartRef.current = Date.now();
+  }, [selected?.id, selected?.media_type]);
+
+  // Push the current activity to Discord whenever what's on screen changes
+  useEffect(() => {
+    if (!discordSettings.enabled) return;
+    if ((page === "movie" || page === "tv") && selected) {
+      const title = selected.title || selected.name || "";
+      let subtitle = page === "movie" ? "Movie" : "Series";
+      if (page === "tv" && watchingEpisode) {
+        subtitle = `S${watchingEpisode.season} · E${watchingEpisode.episode}`;
+      }
+      sendWatchingActivity(
+        {
+          title,
+          subtitle,
+          posterUrl: imgUrl(selected.poster_path, "w500"),
+          startedAt: watchStartRef.current,
+        },
+        discordSettings,
+      );
+    } else {
+      sendIdleActivity(discordSettings);
+    }
+  }, [page, selected, watchingEpisode, discordSettings]);
   useEffect(() => {
     // Accent colour
     const accent = storage.get(STORAGE_KEYS.ACCENT_COLOR) || "red";
@@ -659,10 +726,16 @@ export default function App() {
     };
     // Functional update - never reads stale history from closure
     setHistory((prev) => {
-      const filtered = prev.filter(
-        (h) => !(h.id === entry.id && h.media_type === entry.media_type),
-      );
-      const next = [entry, ...filtered].slice(0, 50);
+      // For TV: dedupe per episode (same show+season+episode).
+      // For movies: dedupe by id+media_type as before.
+      const filtered = prev.filter((h) => {
+        if (h.id !== entry.id || h.media_type !== entry.media_type) return true;
+        if (entry.media_type === "tv") {
+          return !(h.season === entry.season && h.episode === entry.episode);
+        }
+        return false;
+      });
+      const next = [entry, ...filtered].slice(0, 100);
       storage.set("history", next);
       return next;
     });
@@ -693,6 +766,20 @@ export default function App() {
       const next = { ...prev };
       delete next[key];
       storage.set("watched", next);
+      return next;
+    });
+  }, []);
+
+  const removeHistory = useCallback((item) => {
+    setHistory((prev) => {
+      const next = prev.filter((h) => {
+        if (h.id !== item.id || h.media_type !== item.media_type) return true;
+        if (item.media_type === "tv") {
+          return !(h.season === item.season && h.episode === item.episode);
+        }
+        return false;
+      });
+      storage.set("history", next);
       return next;
     });
   }, []);
@@ -875,6 +962,7 @@ export default function App() {
                 watched={watched}
                 onMarkWatched={markWatched}
                 onMarkUnwatched={markUnwatched}
+                onEpisodeChange={setWatchingEpisode}
               />
             )}
             {page === "history" && (
@@ -887,6 +975,7 @@ export default function App() {
                 watched={watched}
                 onMarkWatched={markWatched}
                 onMarkUnwatched={markUnwatched}
+                onRemoveHistory={removeHistory}
               />
             )}
             {page === "settings" && (

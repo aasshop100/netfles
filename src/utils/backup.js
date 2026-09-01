@@ -25,6 +25,9 @@ export const BACKUP_KEYS = [
   "ageLimit",
   "ratingCountry",
   "watchedThreshold",
+  "autoplayNextEnabled",
+  "autoplayNextDuration",
+  "autoplayNextLayout",
   // Subtitles
   "subtitleDownload",
   "subtitleLang",

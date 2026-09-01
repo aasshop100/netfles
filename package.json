@@ -1,6 +1,6 @@
 {
   "name": "netfles",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "description": "NETFLES Web App",
   "author": {
     "name": "truelockmc",
@@ -171,5 +171,10 @@
     "asarUnpack": [
       "src/styles/fonts/**"
     ]
+  },
+  "allowScripts": {
+    "electron@40.10.6": true,
+    "electron-winstaller@5.4.0": true,
+    "esbuild@0.28.1": true
   }
 }

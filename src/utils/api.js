@@ -304,6 +304,17 @@ export const sourceProgressViaFrames = (sourceId) =>
 export const sourceIsAsync = (sourceId) =>
   PLAYER_SOURCES.find((s) => s.id === sourceId)?.async ?? false;
 
+// Return the next non-async source after `currentId` in PLAYER_SOURCES order
+export const getNextNonAsyncSource = (currentId) => {
+  const nonAsync = PLAYER_SOURCES.filter((s) => !s.async);
+  if (nonAsync.length === 0) return null;
+  const idx = nonAsync.findIndex((s) => s.id === currentId);
+  // If currentId is itself non-async, return the next one (wrap around).
+  // If currentId is async (e.g. AllManga), just return the first non-async.
+  if (idx < 0) return nonAsync[0].id;
+  return nonAsync[(idx + 1) % nonAsync.length].id;
+};
+
 // Sources that require a transparent webRequest intercept to load properly
 export const NEEDS_INTERCEPT = ["vidsrc"];
 
