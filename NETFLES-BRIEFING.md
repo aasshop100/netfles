@@ -646,6 +646,21 @@ NETFLES fetches content from **TMDB API** in real time on every page load. TMDB 
 | `src/components/Sidebar.jsx` | NETFLES name in UI |
 | `src/components/WindowTitlebar.jsx` | NETFLES in titlebar |
 
+**Beyond the table — the web-vs-Electron guards that must survive every sync:**
+
+| Guard | Where | Why |
+|---|---|---|
+| `<iframe>` instead of `<webview>` | `TVPage.jsx`, `MoviePage.jsx` | `<webview>` is Electron-only; using it is the TV black-player bug |
+| `if (!window.electron) return` before AllManga resolve | `TVPage.jsx`, `MoviePage.jsx` | resolve runs over main-process IPC the web build lacks |
+| `if (!wv.executeJavaScript) return` | `TVPage.jsx` skip-controls effect | iframes have no `executeJavaScript` |
+| `isElectron` gate on desktop-only Settings sections | `SettingsPage.jsx` | e.g. Anime Intro Skip, download folder |
+| `.hero-brand { display: none }` | `global.css` | hides upstream's Streambert wordmark |
+| No downloads feature | everywhere | no `DownloadsPage`, no `setDownloaderFolder` — drop any upstream code referencing them |
+
+Upstream keeps re-adding all of the above. Expect to re-insert them by hand on
+each sync; a clean auto-merge is the exception, not the rule.
+
+
 ---
 
 ## 14. Running the App Locally
@@ -738,7 +753,7 @@ git push origin main
 ### Automation
 - [x] Added `.github/workflows/sync-upstream.yml`
 - [x] Added `.github/CODEOWNERS`
-- [ ] Tested upstream sync workflow manually (trigger via GitHub → Actions tab)
+- [x] Tested upstream sync workflow manually — green 2026-09-01 (runs 33471748161, 33471946855). Note: only the early-exit path is proven; the merge→PR path first runs when upstream is actually ahead.
 
 ### Performance
 - [x] Default source changed from Vidking → **Videasy** (smoother, fewer ads)
@@ -821,6 +836,10 @@ git push origin main
 | 2026-07-10 | Homepage rows redesigned as Netflix-style swipe rows (new `ScrollRow` component) |
 | 2026-07-10 | Mobile bottom nav restyled as a floating rounded bar; hid keyboard-shortcuts "?" on mobile |
 | 2026-07-10 | Settings trimmed for web: hid desktop-only sections + dead sub-controls (all `isElectron`-gated) |
+| 2026-09-01 | **Upstream sync** — merged 17 Streambert commits (security fixes #149, Mac fixes #150, Discord RPC #156, TV series status #161, autoplay-next); 8 files conflicted, resolved by hand |
+| 2026-09-01 | **Fixed `sync-upstream.yml`** — had failed 90/90 scheduled runs and never opened a PR; rewritten with plain git + `gh` |
+| 2026-09-01 | Bumped `actions/checkout` v4→v5 in all 4 workflows (Node 20 deprecation) |
+| 2026-09-01 | Untracked `.claude/settings.json` + gitignored it (public repo, machine-specific paths) |
 
 ---
 
@@ -863,3 +882,86 @@ with clean production builds + successful GitHub Pages deploys. **Auto-update un
 ---
 
 *Last updated: 2026-07-10 — Briefing maintained with Claude Code (claude.ai). Good luck Lester! 🚀*
+
+---
+
+## 🗒️ 2026-09-01 Session — Upstream Sync + Workflow Repair (details)
+
+Triggered by a GitHub email warning that the scheduled sync workflow would be
+disabled. That email was the least important thing it turned up.
+
+### 1. The sync workflow had never worked
+
+`.github/workflows/sync-upstream.yml` had run **90 times and failed 90 times**,
+never once opening a sync PR.
+
+**Root cause:** it checked out a local `upstream-sync-$(date)` branch and *then*
+handed off to `peter-evans/create-pull-request`. That action derives its working
+base from `HEAD`, so it ran `git reset --hard origin/upstream-sync-<date>`
+against a branch that existed only locally → `exit 128`. Every run died there.
+
+**Second latent bug:** it requested the label `upstream-sync`, which does not
+exist in this repo — the next failure it would have hit.
+
+**Rewritten** with plain `git` + `gh` (no third-party action):
+- one stable `upstream-sync` branch, updated in place, instead of a new dated branch daily
+- early exit when upstream is 0 commits ahead
+- merge conflicts `--abort` cleanly and report to `$GITHUB_STEP_SUMMARY` instead of pushing a broken tree
+- creates the `upstream-sync` label if missing
+- explicit `permissions:` block
+- PR body moved to `.github/upstream-sync-pr-body.md` — a column-0 heredoc inside
+  a `run: |` block scalar is **invalid YAML** (it breaks out of the block)
+
+> ⚠️ About the email itself: GitHub disables scheduled workflows after **60 days
+> of repo inactivity**. Any push resets the clock. Nothing to fix in code.
+
+### 2. Merged 17 upstream commits (8 conflicts)
+
+Included the security fixes (#149) and Mac fixes (#150), Discord RPC (#156),
+TV series status (#161), Codeberg as a second update source (#147), and the
+autoplay-next-episode feature.
+
+**The pattern behind almost every conflict:** NETFLES is a **web** build, upstream
+is Electron. Take upstream's improvement, then re-insert the NETFLES guard.
+
+| File | Resolution |
+|---|---|
+| `package.json` | NETFLES name + web-only vite scripts kept; version → 2.6.0 |
+| `package-lock.json` | Regenerated from resolved `package.json`, not hand-merged |
+| `App.jsx` | Took `checkForUpdatesWithFallback` + `onEpisodeChange`; dropped `DownloadsPage` / downloads props |
+| `Sidebar.jsx` | Kept NETFLES wrapper; rejected upstream's `StreambertLogo` + seasonal overlay |
+| `MoviePage.jsx` | Upstream auto-failover + re-inserted `!window.electron` bail |
+| `TVPage.jsx` | Autoplay "Up Next" overlay kept — but on NETFLES's `<iframe>`, not `<webview>` |
+| `SettingsPage.jsx` | New Autoplay section added; Intro Skip stays `isElectron`-gated |
+| `global.css` | Upstream theme-aware hero gradient; `.hero-brand` stays `display:none` |
+
+### 3. ⚠️ Two upstream dependencies deliberately NOT taken
+
+Upstream's `7ed2a56 version bump` added `approve@^0.0.12` and `scripts@^0.1.0`
+to `dependencies`. **Neither is imported anywhere in upstream's own tree.**
+Unused deps with names like that read as an accidental install. They are
+excluded here — **re-check this on every future sync**, they will keep coming
+back until upstream removes them.
+
+### 4. Housekeeping
+
+- `actions/checkout` v4 → **v5** in all 4 workflows (v4 targets deprecated Node 20;
+  confirmed the deprecation annotation disappeared afterward)
+- `.claude/settings.json` **untracked + gitignored** — this repo is public and the
+  file held `C:\Users\...` paths and an unrelated project directory. It still works
+  locally. Older versions remain in git history (paths only, no secrets).
+
+### Verification performed
+
+- `npm run build` passes
+- Dev server exercised across home, settings, TV detail, the player, and movie
+  detail — **zero console errors**
+- Confirmed the new Autoplay section renders and Intro Skip computes
+  `display: none` on web
+- Sync workflow triggered manually twice, green both times
+
+### Still unproven
+
+The workflow's **merge → push → PR path** has never executed. It only runs when
+upstream is actually ahead. Given this sync needed 8 files resolved by hand,
+expect the conflict-abort path more often than a clean auto-PR.
