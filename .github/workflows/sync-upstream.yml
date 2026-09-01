@@ -5,6 +5,10 @@ on:
     - cron: '0 0 * * *'  # Daily at midnight UTC
   workflow_dispatch:       # Can also be triggered manually
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -13,39 +17,62 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Fetch upstream Streambert
         run: |
           git remote add upstream https://github.com/truelockmc/streambert.git || true
-          git fetch upstream
+          git fetch upstream --no-tags
 
-      - name: Create sync branch
+      - name: Check for new upstream commits
+        id: check
         run: |
-          git checkout -b upstream-sync-$(date +%Y%m%d) || git checkout upstream-sync-$(date +%Y%m%d)
-          git merge upstream/main --no-commit --no-ff || true
+          COUNT=$(git rev-list --count HEAD..upstream/main)
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "Upstream is $COUNT commit(s) ahead of NETFLES main."
+          if [ "$COUNT" -eq 0 ]; then
+            echo "Nothing to sync." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
-      - name: Open Pull Request
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: upstream-sync-${{ github.run_number }}
-          title: "⬆️ Upstream Sync: Streambert Update"
-          body: |
-            ## Streambert has been updated!
+      - name: Merge upstream into sync branch
+        if: steps.check.outputs.count != '0'
+        id: merge
+        run: |
+          git checkout -B upstream-sync origin/main
+          if git merge upstream/main --no-ff -m "Merge upstream Streambert into NETFLES"; then
+            echo "clean=true" >> "$GITHUB_OUTPUT"
+          else
+            git merge --abort
+            echo "clean=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "## Upstream sync hit merge conflicts"
+              echo ""
+              echo "\`upstream/main\` cannot be merged into \`main\` automatically."
+              echo "Resolve it locally:"
+              echo ""
+              echo '```'
+              echo "git fetch upstream && git checkout -b upstream-sync && git merge upstream/main"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
 
-            This PR was automatically created by the upstream sync workflow.
+      - name: Push sync branch
+        if: steps.merge.outputs.clean == 'true'
+        run: git push --force-with-lease origin upstream-sync
 
-            ### ⚠️ Before merging, check these protected NETFLES branding files:
-            - [ ] `package.json` — contains app name "NETFLES"
-            - [ ] `index.html` — contains `<title>NETFLES</title>`
-            - [ ] `public/logo.svg` — NETFLES logo
-            - [ ] `src/components/Sidebar.jsx` — displays NETFLES in UI
-            - [ ] `src/components/WindowTitlebar.jsx` — displays NETFLES in titlebar
-            - [ ] `vite.config.js` — contains `base: '/netfles/'` for GitHub Pages
-
-            If **any of the above are touched** → review carefully before merging ⚠️
-            If **none of the above are touched** → safe to merge ✅
-
-            > 💡 Reminder: New movies/shows are NOT related to this. Content comes live from TMDB API automatically.
-          labels: upstream-sync
+      - name: Open or update Pull Request
+        if: steps.merge.outputs.clean == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh pr view upstream-sync --json number >/dev/null 2>&1; then
+            echo "PR already open for upstream-sync — branch updated."
+            exit 0
+          fi
+          gh label create upstream-sync --color 1D76DB --description "Automated Streambert upstream merge" 2>/dev/null || true
+          gh pr create --base main --head upstream-sync --label upstream-sync --title "⬆️ Upstream Sync: Streambert Update" --body-file .github/upstream-sync-pr-body.md
